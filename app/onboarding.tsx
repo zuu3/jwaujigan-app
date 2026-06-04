@@ -74,8 +74,8 @@ export default function OnboardingScreen() {
     setSavingDistrict(true);
     setDistrictError(null);
     try {
-      await saveDistrict(token, selectedDistrict.displayLabel);
-      await updateUser({ district: selectedDistrict.displayLabel });
+      const saved = await saveDistrict(token, selectedDistrict.district);
+      await updateUser({ district: saved.district });
       await queryClient.invalidateQueries({ queryKey: ['me'] });
       setStep('questions');
     } catch (e) {
