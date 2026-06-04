@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { Keyboard, KeyboardAvoidingView, Modal, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
 import { usePolls, useCreatePoll } from '@/api/polls';
 import { useAuth } from '@/auth/auth-context';
 import { PollCard } from '@/components/poll-card';
@@ -58,12 +57,7 @@ function CreatePollModal({ visible, onClose }: { visible: boolean; onClose: () =
     <Modal visible={visible} transparent animationType="slide" onRequestClose={close}>
       <KeyboardAvoidingView style={modal.overlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <Pressable style={modal.backdrop} onPress={() => { Keyboard.dismiss(); close(); }} />
-        {/* BlurView = UIVisualEffectView → iOS 26에서 자동 Liquid Glass */}
-        <BlurView
-          intensity={100}
-          tint="systemUltraThinMaterial"
-          style={[modal.sheet, { paddingBottom: insets.bottom + spacing[4] }]}
-        >
+        <View style={[modal.sheet, { paddingBottom: insets.bottom + spacing[4] }]}>
           <View style={modal.header}>
             <View style={modal.handle} />
             <View style={modal.titleRow}>
@@ -136,7 +130,7 @@ function CreatePollModal({ visible, onClose }: { visible: boolean; onClose: () =
               <Text style={modal.submitText}>{createMutation.isPending ? '등록 중...' : '투표 등록하기'}</Text>
             </Pressable>
           </ScrollView>
-        </BlurView>
+        </View>
       </KeyboardAvoidingView>
     </Modal>
   );
@@ -213,9 +207,9 @@ const styles = StyleSheet.create({
 const modal = StyleSheet.create({
   overlay: { flex: 1, justifyContent: 'flex-end' },
   backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(2,9,19,0.45)' },
-  sheet: { borderTopLeftRadius: 20, borderTopRightRadius: 20, overflow: 'hidden', maxHeight: '92%' },
+  sheet: { backgroundColor: colors.white, borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '92%' },
   header: { paddingHorizontal: spacing[5], paddingTop: spacing[3] },
-  handle: { width: 36, height: 4, borderRadius: 2, backgroundColor: 'rgba(0,0,0,0.18)', alignSelf: 'center', marginBottom: spacing[3] },
+  handle: { width: 36, height: 4, borderRadius: 2, backgroundColor: colors.grey300, alignSelf: 'center', marginBottom: spacing[3] },
   titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingBottom: spacing[2] },
   title: { ...typography.headingLarge, color: colors.grey900 },
   closeBtn: { paddingVertical: spacing[2], paddingLeft: spacing[4] },
