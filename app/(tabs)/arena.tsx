@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, RefreshControl, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useHome } from '@/api/home';
 import { useAuth } from '@/auth/auth-context';
 import { PageHeader, Screen } from '@/components/screen';
@@ -29,7 +29,15 @@ export default function ArenaScreen() {
   }, [homeQuery.data, query, sort, status]);
 
   return (
-    <Screen>
+    <Screen
+      refreshControl={
+        <RefreshControl
+          refreshing={homeQuery.isFetching && !homeQuery.isLoading}
+          onRefresh={() => void homeQuery.refetch()}
+          tintColor={colors.blue500}
+        />
+      }
+    >
       <PageHeader title="AI 토론 배틀" description="이슈를 고르고 AI 토론을 지켜보거나 직접 참여하세요." />
 
       <TextInput

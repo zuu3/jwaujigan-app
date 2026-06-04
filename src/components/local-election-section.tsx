@@ -32,7 +32,7 @@ function PersonCard({ person, tab }: { person: ElectionPerson; tab: 'candidates'
   return (
     <Pressable
       style={card.wrap}
-      onPress={() => router.push('/local-politicians/' + person.huboid)}
+      onPress={() => router.push(`/local-politicians/${person.huboid}?type=${person.electionType}&tab=${tab}`)}
     >
       <View style={card.top}>
         {person.photoUrl ? (

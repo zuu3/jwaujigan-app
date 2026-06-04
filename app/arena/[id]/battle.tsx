@@ -1,10 +1,10 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { judgeDebate, requestDebateTurn, saveBattleLog, DebateMessage, DebateResult } from '@/api/arena';
 import { useIssue } from '@/api/issues';
 import { useAuth } from '@/auth/auth-context';
-import { Screen } from '@/components/screen';
 import { SkeletonCard } from '@/components/state-panels';
 import { colors } from '@/theme/colors';
 import { spacing } from '@/theme/spacing';
@@ -55,6 +55,7 @@ export default function ArenaBattleScreen() {
   const [result, setResult] = useState<DebateResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const listRef = useRef<FlatList>(null);
   const startedRef = useRef(false);
   const runningTurnRef = useRef<number | null>(null);
   const messagesRef = useRef<DebateMessage[]>([]);
@@ -151,8 +152,14 @@ export default function ArenaBattleScreen() {
 
   const stanceLabel = userStance === 'watch' ? 'AI 배틀 구경 중' : userStance === 'progressive' ? '진보 AI 응원 중' : '보수 AI 응원 중';
 
-  return (
-    <Screen>
+  // FlatList 아이템: header + messages + streaming + footer
+  const allMessages = [
+    ...messages,
+    ...(streamingText ? [{ role: streamingRole as DebateMessage['role'], content: streamingText + '▌' }] : []),
+  ];
+
+  const header = (
+    <View style={styles.listHeader}>
       <View style={styles.topBar}>
         <Pressable onPress={() => router.back()} hitSlop={16}>
           <Text style={styles.back}>← 이전</Text>
@@ -163,16 +170,13 @@ export default function ArenaBattleScreen() {
           </View>
         ) : null}
       </View>
-
       {issueQuery.isLoading ? <SkeletonCard lines={2} /> : null}
-
       {issue ? (
         <View style={styles.header}>
           <Text style={styles.eyebrow}>{stanceLabel}</Text>
           <Text style={styles.title} numberOfLines={3}>{issue.title}</Text>
         </View>
       ) : null}
-
       {error ? (
         <View style={styles.errorBox}>
           <Text style={styles.errorText}>{error}</Text>
@@ -181,24 +185,11 @@ export default function ArenaBattleScreen() {
           </Pressable>
         </View>
       ) : null}
+    </View>
+  );
 
-      <View style={styles.messages}>
-        {messages.map((msg, i) => (
-          <View key={i} style={[styles.message, { backgroundColor: roleBg(msg.role) }]}>
-            <Text style={[styles.messageRole, { color: roleColor(msg.role) }]}>{roleLabel(msg.role, userStance)}</Text>
-            <Text style={styles.messageText}>{msg.content}</Text>
-          </View>
-        ))}
-        {streamingText ? (
-          <View style={[styles.message, { backgroundColor: roleBg(streamingRole) }]}>
-            <Text style={[styles.messageRole, { color: roleColor(streamingRole) }]}>
-              {streamingRole === 'progressive' ? '진보 AI' : '보수 AI'}
-            </Text>
-            <Text style={styles.messageText}>{streamingText}▌</Text>
-          </View>
-        ) : null}
-      </View>
-
+  const footer = (
+    <View style={styles.listFooter}>
       {phase === 'between-turns' && !error && turnIndex < 5 ? (
         <View style={styles.interventionPanel}>
           <Text style={styles.interventionHint}>내 의견을 AI 토론에 반영할 수 있어요.</Text>
@@ -212,7 +203,6 @@ export default function ArenaBattleScreen() {
           </View>
         </View>
       ) : null}
-
       {phase === 'intervention' ? (
         <View style={styles.interventionInput}>
           <Text style={styles.interventionTitle}>내 의견 ({argument.length}/{MAX_ARG})</Text>
@@ -235,7 +225,6 @@ export default function ArenaBattleScreen() {
           </View>
         </View>
       ) : null}
-
       {result ? (
         <View style={styles.result}>
           <Text style={[styles.resultTitle, { color: winnerColor(result.winner) }]}>{winnerLabel(result.winner)}</Text>
@@ -245,11 +234,35 @@ export default function ArenaBattleScreen() {
           </Pressable>
         </View>
       ) : null}
-    </Screen>
+    </View>
+  );
+
+  return (
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <FlatList
+        ref={listRef}
+        data={allMessages}
+        keyExtractor={(_, i) => String(i)}
+        contentContainerStyle={styles.listContent}
+        ListHeaderComponent={header}
+        ListFooterComponent={footer}
+        onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
+        renderItem={({ item: msg }) => (
+          <View style={[styles.message, { backgroundColor: roleBg(msg.role) }]}>
+            <Text style={[styles.messageRole, { color: roleColor(msg.role) }]}>{roleLabel(msg.role, userStance)}</Text>
+            <Text style={styles.messageText}>{msg.content}</Text>
+          </View>
+        )}
+      />
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: { flex: 1, backgroundColor: colors.white },
+  listContent: { padding: spacing[5], paddingBottom: 120, gap: spacing[5] },
+  listHeader: { gap: spacing[5], marginBottom: spacing[3] },
+  listFooter: { gap: spacing[5], marginTop: spacing[3] },
   topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   back: { ...typography.body, color: colors.grey600, fontWeight: '600' },
   roundBadge: { paddingHorizontal: spacing[3], paddingVertical: 4, borderRadius: 20, borderWidth: 1, borderColor: colors.grey200 },
@@ -261,8 +274,7 @@ const styles = StyleSheet.create({
   errorText: { ...typography.body, color: colors.red500 },
   retryButton: { alignSelf: 'flex-start', paddingHorizontal: spacing[3], paddingVertical: spacing[2], borderRadius: 8, backgroundColor: colors.grey900 },
   retryText: { ...typography.bodySmall, color: colors.white, fontWeight: '600' },
-  messages: { gap: spacing[3] },
-  message: { gap: spacing[2], padding: spacing[4], borderRadius: 12 },
+  message: { gap: spacing[2], padding: spacing[4], borderRadius: 12, marginBottom: spacing[3] },
   messageRole: { ...typography.caption, fontWeight: '700' },
   messageText: { ...typography.body, color: colors.grey900 },
   interventionPanel: { gap: spacing[2], padding: spacing[4], borderRadius: 12, borderWidth: 1, borderColor: colors.grey200 },

@@ -42,23 +42,23 @@ function GuideSheet({ onClose }: { onClose: () => void }) {
     { n: '3', label: 'AI 배틀로 더 깊이 파고들어요', desc: '투표 후 AI가 두 입장을 직접 토론해요' },
   ];
   return (
-    <Modal transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable style={guide.overlay} onPress={onClose} />
-      <View style={guide.sheet}>
-        <View style={guide.handle} />
-        <Text style={guide.title}>좌우지간 사용법</Text>
-        {steps.map((s) => (
-          <View key={s.n} style={guide.step}>
-            <View style={guide.num}><Text style={guide.numText}>{s.n}</Text></View>
-            <View style={guide.stepContent}>
-              <Text style={guide.stepLabel}>{s.label}</Text>
-              <Text style={guide.stepDesc}>{s.desc}</Text>
+    <Modal presentationStyle="pageSheet" animationType="slide" onRequestClose={onClose}>
+      <View style={guide.container}>
+        <View style={guide.sheet}>
+          <Text style={guide.title}>좌우지간 사용법</Text>
+          {steps.map((s) => (
+            <View key={s.n} style={guide.step}>
+              <View style={guide.num}><Text style={guide.numText}>{s.n}</Text></View>
+              <View style={guide.stepContent}>
+                <Text style={guide.stepLabel}>{s.label}</Text>
+                <Text style={guide.stepDesc}>{s.desc}</Text>
+              </View>
             </View>
-          </View>
-        ))}
-        <Pressable style={guide.startBtn} onPress={onClose}>
-          <Text style={guide.startText}>시작하기</Text>
-        </Pressable>
+          ))}
+          <Pressable style={guide.startBtn} onPress={onClose}>
+            <Text style={guide.startText}>시작하기</Text>
+          </Pressable>
+        </View>
       </View>
     </Modal>
   );
@@ -316,9 +316,8 @@ const styles = StyleSheet.create({
 });
 
 const guide = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' },
+  container: { flex: 1, justifyContent: 'flex-end' },
   sheet: { backgroundColor: colors.white, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: spacing[6], gap: spacing[4] },
-  handle: { width: 36, height: 4, borderRadius: 2, backgroundColor: colors.grey300, alignSelf: 'center', marginBottom: spacing[2] },
   title: { ...typography.headingLarge, color: colors.grey900 },
   step: { flexDirection: 'row', gap: spacing[3], alignItems: 'flex-start' },
   num: { width: 28, height: 28, borderRadius: 14, backgroundColor: colors.blue500, alignItems: 'center', justifyContent: 'center' },
