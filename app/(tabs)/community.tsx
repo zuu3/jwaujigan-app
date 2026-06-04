@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Keyboard, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { usePolls, useCreatePoll } from '@/api/polls';
 import { useAuth } from '@/auth/auth-context';
 import { PollCard } from '@/components/poll-card';
@@ -17,6 +18,7 @@ function randomId() {
 }
 
 function CreatePollModal({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+  const insets = useSafeAreaInsets();
   const { token } = useAuth();
   const createMutation = useCreatePoll(token);
   const [question, setQuestion] = useState('');
@@ -55,12 +57,19 @@ function CreatePollModal({ visible, onClose }: { visible: boolean; onClose: () =
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={close}>
-      <View style={modal.overlay}>
-        <Pressable style={modal.backdrop} onPress={close} />
-        <View style={modal.sheet}>
-          <View style={modal.handle} />
-          <Text style={modal.title}>투표 만들기</Text>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <View style={modal.overlay}>
+          <Pressable style={modal.backdrop} onPress={() => { Keyboard.dismiss(); close(); }} />
+          <View style={[modal.sheet, { paddingBottom: insets.bottom + spacing[4] }]}>
+            <Pressable onPress={Keyboard.dismiss}>
+              <View style={modal.handle} />
+              <Text style={modal.title}>투표 만들기</Text>
+            </Pressable>
 
+          <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
           <Text style={modal.label}>질문</Text>
           <TextInput
             style={modal.input}
@@ -69,6 +78,8 @@ function CreatePollModal({ visible, onClose }: { visible: boolean; onClose: () =
             placeholder="어떤 주제로 투표할까요?"
             placeholderTextColor={colors.grey400}
             multiline
+            returnKeyType="next"
+            blurOnSubmit={false}
           />
 
           <Text style={modal.label}>선택지 (2~4개)</Text>
@@ -107,13 +118,15 @@ function CreatePollModal({ visible, onClose }: { visible: boolean; onClose: () =
 
           <Pressable
             style={[modal.submitBtn, createMutation.isPending && modal.submitDisabled]}
-            onPress={() => void handleSubmit()}
+            onPress={() => { Keyboard.dismiss(); void handleSubmit(); }}
             disabled={createMutation.isPending}
           >
             <Text style={modal.submitText}>{createMutation.isPending ? '등록 중...' : '투표 등록하기'}</Text>
           </Pressable>
+          </ScrollView>
+          </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }

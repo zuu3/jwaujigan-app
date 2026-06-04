@@ -9,6 +9,7 @@ import { useMyFollows } from '@/api/mypage';
 import { useLocalPoliticians } from '@/api/politicians';
 import { useAuth } from '@/auth/auth-context';
 import { IssueCard } from '@/components/issue-card';
+import { LocalElectionSection } from '@/components/local-election-section';
 import { PollCard } from '@/components/poll-card';
 import { Screen } from '@/components/screen';
 import { ErrorPanel, SkeletonList } from '@/components/state-panels';
@@ -189,41 +190,15 @@ export default function HomeScreen() {
       ) : null}
 
       {/* 지방선거 */}
-      {district && hasElectionData ? (
+      {district ? (
         <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>지방선거</Text>
-            <Text style={styles.sectionSub}>{electionQuery.data?.wiwNames?.join(' · ') ?? district}</Text>
-          </View>
-          {ELECTION_TYPE_ORDER.map((type) => {
-            const list = electionQuery.data?.candidates[type];
-            if (!list?.length) return null;
-            return (
-              <View key={type} style={styles.electionGroup}>
-                <Text style={styles.electionTypeLabel}>{ELECTION_TYPE_LABELS[type]}</Text>
-                {list.slice(0, 4).map((person) => (
-                  <View key={person.huboid + person.giho} style={styles.electionCard}>
-                    <View style={styles.electionLeft}>
-                      {person.photoUrl ? (
-                        <Image source={{ uri: person.photoUrl }} style={styles.electionPhoto} />
-                      ) : (
-                        <View style={styles.electionPhotoFallback}>
-                          <Text style={styles.electionInitial}>{person.name[0]}</Text>
-                        </View>
-                      )}
-                    </View>
-                    <View style={styles.electionInfo}>
-                      <Text style={styles.electionName}>{person.name}</Text>
-                      <View style={[styles.partyBadge, { borderColor: partyColor(person.jdName) }]}>
-                        <Text style={[styles.partyText, { color: partyColor(person.jdName) }]}>{person.jdName}</Text>
-                      </View>
-                      {person.job ? <Text style={styles.electionMeta}>{person.job}</Text> : null}
-                    </View>
-                  </View>
-                ))}
-              </View>
-            );
-          })}
+          <LocalElectionSection
+            isLoading={electionQuery.isLoading}
+            isError={electionQuery.isError}
+            data={electionQuery.data}
+            onRetry={() => void electionQuery.refetch()}
+            district={district}
+          />
         </View>
       ) : null}
 
