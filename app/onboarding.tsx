@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQueryClient } from '@tanstack/react-query';
 import { saveDistrict, savePoliticalProfile, PoliticalProfileResult } from '@/api/onboarding';
 import { useAuth } from '@/auth/auth-context';
@@ -133,52 +134,67 @@ export default function OnboardingScreen() {
     const progress = Math.round(((index + 1) / questions.length) * 100);
     const allAnswered = answeredCount === questions.length;
     return (
-      <Screen>
-        <View style={styles.header}>
-          <Text style={styles.eyebrow}>성향 검사</Text>
-          <View style={styles.progressRow}>
-            <Text style={styles.progressLabel}>질문 {index + 1} / {questions.length}</Text>
-            <View style={styles.progressTrack}>
-              <View style={[styles.progressFill, { width: `${progress}%` }]} />
+      <SafeAreaView style={q.safe} edges={['top', 'bottom']}>
+        {/* 상단 고정: 프로그레스 */}
+        <View style={q.header}>
+          <Text style={q.eyebrow}>성향 검사</Text>
+          <View style={q.progressRow}>
+            <Text style={q.progressLabel}>질문 {index + 1} / {questions.length}</Text>
+            <View style={q.progressTrack}>
+              <View style={[q.progressFill, { width: `${progress}%` }]} />
             </View>
           </View>
         </View>
-        <View style={styles.card}>
-          <Text style={styles.axisTag}>{AXIS_LABELS[question.axis]}</Text>
-          <Text style={styles.questionText}>{question.text}</Text>
-          <Text style={styles.hint}>가장 가까운 입장을 고르세요</Text>
-          <View style={styles.options}>
+
+        {/* 가운데: 질문 + 옵션 */}
+        <View style={q.body}>
+          <Text style={q.axisTag}>{AXIS_LABELS[question.axis]}</Text>
+          <Text style={q.questionText}>{question.text}</Text>
+          <Text style={q.hint}>가장 가까운 입장을 고르세요</Text>
+          <View style={q.options}>
             {likertOptions.map((opt) => {
               const selected = answers[question.id] === opt.value;
               return (
                 <Pressable
                   key={opt.value}
-                  style={[styles.option, selected && styles.optionSelected]}
+                  style={[q.option, selected && q.optionSelected]}
                   onPress={() => handleAnswer(opt.value)}
                 >
-                  <Text style={[styles.optionText, selected && styles.optionTextSelected]}>{opt.label}</Text>
+                  <Text style={[q.optionText, selected && q.optionTextSelected]}>{opt.label}</Text>
                 </Pressable>
               );
             })}
           </View>
-          <View style={styles.navRow}>
-            <Pressable disabled={index === 0} onPress={() => setIndex((i) => Math.max(0, i - 1))}>
-              <Text style={[styles.navText, index === 0 && styles.navDisabled]}>← 이전</Text>
+        </View>
+
+        {/* 하단 고정: 네비 + 완료 */}
+        <View style={q.footer}>
+          <View style={q.navRow}>
+            <Pressable
+              style={q.navBtn}
+              disabled={index === 0}
+              onPress={() => setIndex((i) => Math.max(0, i - 1))}
+            >
+              <Text style={[q.navText, index === 0 && q.navDisabled]}>← 이전</Text>
             </Pressable>
-            <Pressable disabled={index === questions.length - 1} onPress={() => setIndex((i) => Math.min(questions.length - 1, i + 1))}>
-              <Text style={[styles.navText, index === questions.length - 1 && styles.navDisabled]}>다음 →</Text>
+            <Pressable
+              style={q.navBtn}
+              disabled={index === questions.length - 1}
+              onPress={() => setIndex((i) => Math.min(questions.length - 1, i + 1))}
+            >
+              <Text style={[q.navText, index === questions.length - 1 && q.navDisabled]}>다음 →</Text>
             </Pressable>
           </View>
+          {submitError ? <Text style={q.error}>{submitError}</Text> : null}
+          <Pressable
+            style={[q.submitBtn, (!allAnswered || isSubmitting) && q.submitDisabled]}
+            disabled={!allAnswered || isSubmitting}
+            onPress={handleSubmit}
+          >
+            <Text style={q.submitText}>{isSubmitting ? '저장 중...' : `완료하기 (${answeredCount}/${questions.length})`}</Text>
+          </Pressable>
         </View>
-        {submitError ? <Text style={styles.error}>{submitError}</Text> : null}
-        <Pressable
-          style={[styles.submitBtn, (!allAnswered || isSubmitting) && styles.submitDisabled]}
-          disabled={!allAnswered || isSubmitting}
-          onPress={handleSubmit}
-        >
-          <Text style={styles.submitText}>{isSubmitting ? '저장 중...' : `완료하기 (${answeredCount}/${questions.length})`}</Text>
-        </Pressable>
-      </Screen>
+      </SafeAreaView>
     );
   }
 
@@ -310,6 +326,34 @@ const styles = StyleSheet.create({
   resultHero: { gap: spacing[3], alignItems: 'center', paddingVertical: spacing[6] },
   resultType: { ...typography.displayLarge, color: colors.grey900, textAlign: 'center', fontWeight: '800' },
   resultDesc: { ...typography.body, color: colors.grey600, textAlign: 'center' },
+});
+
+const q = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: colors.white },
+  header: { paddingHorizontal: spacing[5], paddingTop: spacing[4], paddingBottom: spacing[4], gap: spacing[2], borderBottomWidth: 1, borderBottomColor: colors.grey100 },
+  eyebrow: { ...typography.bodySmall, color: colors.blue500, fontWeight: '700' },
+  progressRow: { gap: spacing[2] },
+  progressLabel: { ...typography.bodySmall, color: colors.grey500, fontWeight: '700' },
+  progressTrack: { height: 4, borderRadius: 999, backgroundColor: colors.grey100, overflow: 'hidden' },
+  progressFill: { height: 4, borderRadius: 999, backgroundColor: colors.blue500 },
+  body: { flex: 1, paddingHorizontal: spacing[5], paddingTop: spacing[5], gap: spacing[4], justifyContent: 'center' },
+  axisTag: { ...typography.caption, color: colors.blue500, fontWeight: '700' },
+  questionText: { ...typography.heading, color: colors.grey900 },
+  hint: { ...typography.bodySmall, color: colors.grey500 },
+  options: { gap: spacing[2] },
+  option: { minHeight: 48, justifyContent: 'center', paddingHorizontal: spacing[3], borderRadius: 8, borderWidth: 1, borderColor: colors.grey200 },
+  optionSelected: { borderColor: colors.blue500, backgroundColor: colors.blue50 },
+  optionText: { ...typography.body, color: colors.grey700 },
+  optionTextSelected: { color: colors.blue500, fontWeight: '700' },
+  footer: { paddingHorizontal: spacing[5], paddingBottom: spacing[4], paddingTop: spacing[3], gap: spacing[3], borderTopWidth: 1, borderTopColor: colors.grey100 },
+  navRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  navBtn: { minHeight: 44, justifyContent: 'center' },
+  navText: { ...typography.body, color: colors.grey900, fontWeight: '700' },
+  navDisabled: { color: colors.grey300 },
+  error: { ...typography.bodySmall, color: colors.red500 },
+  submitBtn: { minHeight: 56, alignItems: 'center', justifyContent: 'center', borderRadius: 12, backgroundColor: colors.blue500 },
+  submitDisabled: { opacity: 0.4 },
+  submitText: { ...typography.subtitle, color: colors.white },
 });
 
 const bar = StyleSheet.create({
