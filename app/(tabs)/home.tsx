@@ -165,7 +165,7 @@ export default function HomeScreen() {
             <Text style={styles.emptyText}>이 지역구로 등록된 의원이 없어요.</Text>
           ) : null}
           {politicians.map((pol) => (
-            <View key={pol.id} style={styles.politicianCard}>
+            <Pressable key={pol.id} style={styles.politicianCard} onPress={() => router.push('/politicians/' + pol.id)}>
               <View style={styles.politicianAvatar}>
                 {pol.image ? (
                   <Image source={{ uri: pol.image }} style={styles.politicianImg} />
@@ -183,7 +183,7 @@ export default function HomeScreen() {
                 {pol.committee ? <Text style={styles.politicianMeta}>{pol.committee}</Text> : null}
                 {pol.reelection ? <Text style={styles.politicianMeta}>{pol.reelection}</Text> : null}
               </View>
-            </View>
+            </Pressable>
           ))}
         </View>
       ) : null}

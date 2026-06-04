@@ -24,6 +24,18 @@ export function usePoll(pollId: string, token: string | null) {
   });
 }
 
+export function useCreatePoll(token: string | null) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: { question: string; options: { id: string; text: string }[]; expires_in_days: number }) =>
+      apiPost<{ poll: { id: string } }>('/api/polls', body, { token }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['polls'] });
+      await queryClient.invalidateQueries({ queryKey: ['home'] });
+    },
+  });
+}
+
 export function useVotePoll(pollId: string, token: string | null) {
   const queryClient = useQueryClient();
   return useMutation({
