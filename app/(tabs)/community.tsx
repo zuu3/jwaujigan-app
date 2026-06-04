@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Keyboard, KeyboardAvoidingView, Modal, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 import { usePolls, useCreatePoll } from '@/api/polls';
 import { useAuth } from '@/auth/auth-context';
 import { PollCard } from '@/components/poll-card';
@@ -54,15 +55,21 @@ function CreatePollModal({ visible, onClose }: { visible: boolean; onClose: () =
   }
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={close}>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <Pressable style={modal.backdrop} onPress={() => { Keyboard.dismiss(); close(); }} />
+    <Modal
+      visible={visible}
+      presentationStyle="pageSheet"
+      animationType="slide"
+      onRequestClose={close}
+    >
+      <KeyboardAvoidingView style={{ flex: 1, backgroundColor: 'transparent' }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <View style={[modal.sheet, { paddingBottom: insets.bottom + spacing[4] }]}>
-          {/* Liquid Glass 핸들 헤더 — 뒤에 스크롤 콘텐츠 있어서 효과 보임 */}
-          <BlurView intensity={80} tint="systemChromeMaterial" style={modal.glassHeader}>
-            <View style={modal.handle} />
+          {/* 제목 행 */}
+          <View style={modal.header}>
             <Text style={modal.title}>투표 만들기</Text>
-          </BlurView>
+            <Pressable onPress={() => { Keyboard.dismiss(); close(); }} style={modal.closeBtn}>
+              <Text style={modal.closeBtnText}>닫기</Text>
+            </Pressable>
+          </View>
 
           <ScrollView
             showsVerticalScrollIndicator={false}
@@ -130,6 +137,7 @@ function CreatePollModal({ visible, onClose }: { visible: boolean; onClose: () =
       </KeyboardAvoidingView>
     </Modal>
   );
+
 }
 
 export default function CommunityScreen() {
@@ -200,11 +208,11 @@ const styles = StyleSheet.create({
 });
 
 const modal = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: 'rgba(2,9,19,0.5)' },
-  sheet: { backgroundColor: colors.white, borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '90%' },
-  glassHeader: { borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingHorizontal: spacing[5], paddingTop: spacing[3], paddingBottom: spacing[3], borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: 'rgba(0,0,0,0.08)', overflow: 'hidden' },
-  handle: { width: 36, height: 4, borderRadius: 2, backgroundColor: colors.grey300, alignSelf: 'center', marginBottom: spacing[3] },
+  sheet: { flex: 1, backgroundColor: 'transparent' },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing[5], paddingTop: spacing[4], paddingBottom: spacing[2] },
   title: { ...typography.headingLarge, color: colors.grey900 },
+  closeBtn: { paddingVertical: spacing[2], paddingLeft: spacing[4] },
+  closeBtnText: { ...typography.body, color: colors.blue500, fontWeight: '600' },
   scrollContent: { padding: spacing[5], paddingTop: spacing[3] },
   label: { ...typography.bodySmall, color: colors.grey700, fontWeight: '600', marginBottom: spacing[2] },
   sectionGap: { marginTop: spacing[4] },
