@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Image, Modal, Pressable, ScrollView, Share, StyleSheet, Switch, Text, View } from 'react-native';
+import { Alert, Image, Modal, Pressable, RefreshControl, ScrollView, Share, StyleSheet, Switch, Text, View } from 'react-native';
 import { useMe } from '@/api/me';
 import { useMyActivity, useMyFollows, useMyPoliticalProfile, useMyPolls, useReferralInfo } from '@/api/mypage';
 import { apiDelete, apiPatch } from '@/api/client';
@@ -182,7 +182,15 @@ export default function MyPageScreen() {
   }
 
   return (
-    <Screen>
+    <Screen
+      refreshControl={
+        <RefreshControl
+          refreshing={meQuery.isFetching && !meQuery.isLoading}
+          onRefresh={() => { void meQuery.refetch(); void profileQuery.refetch(); void activityQuery.refetch(); }}
+          tintColor={colors.blue500}
+        />
+      }
+    >
       <PageHeader title="마이페이지" />
 
       {/* 프로필 */}

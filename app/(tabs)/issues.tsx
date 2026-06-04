@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, RefreshControl, StyleSheet, Text, TextInput, View } from 'react-native';
+import { BlurView } from 'expo-blur';
 import { useHome } from '@/api/home';
 import { useAuth } from '@/auth/auth-context';
 import { IssueCard } from '@/components/issue-card';
@@ -27,25 +28,39 @@ export default function IssuesScreen() {
   }, [homeQuery.data, query, sort]);
 
   return (
-    <Screen>
+    <Screen
+      refreshControl={
+        <RefreshControl
+          refreshing={homeQuery.isFetching && !homeQuery.isLoading}
+          onRefresh={() => void homeQuery.refetch()}
+          tintColor={colors.blue500}
+        />
+      }
+    >
       <PageHeader title="이슈" description="국회에서 논의 중이거나 처리된 법안을 모아봤어요." />
 
-      <TextInput
-        style={styles.search}
-        value={query}
-        onChangeText={setQuery}
-        placeholder="이슈 검색"
-        placeholderTextColor={colors.grey400}
-        clearButtonMode="while-editing"
-      />
+      {/* Liquid Glass 검색바 */}
+      <BlurView intensity={60} tint="systemUltraThinMaterial" style={styles.searchBlur}>
+        <TextInput
+          style={styles.searchInput}
+          value={query}
+          onChangeText={setQuery}
+          placeholder="이슈 검색"
+          placeholderTextColor={colors.grey400}
+          clearButtonMode="while-editing"
+        />
+      </BlurView>
 
+      {/* Liquid Glass 정렬 칩 */}
       <View style={styles.sortRow}>
         {(['newest', 'oldest'] as Sort[]).map((s) => (
-          <Pressable key={s} style={[styles.chip, sort === s && styles.chipActive]} onPress={() => setSort(s)}>
-            <Text style={[styles.chipText, sort === s && styles.chipTextActive]}>
-              {s === 'newest' ? '최신순' : '오래된 순'}
-            </Text>
-          </Pressable>
+          <BlurView key={s} intensity={50} tint="systemUltraThinMaterial" style={[styles.chipBlur, sort === s && styles.chipBlurActive]}>
+            <Pressable style={styles.chipInner} onPress={() => setSort(s)}>
+              <Text style={[styles.chipText, sort === s && styles.chipTextActive]}>
+                {s === 'newest' ? '최신순' : '오래된 순'}
+              </Text>
+            </Pressable>
+          </BlurView>
         ))}
       </View>
 
@@ -64,10 +79,12 @@ export default function IssuesScreen() {
 }
 
 const styles = StyleSheet.create({
-  search: { minHeight: 44, paddingHorizontal: spacing[3], borderRadius: 10, backgroundColor: colors.grey100, color: colors.grey900, ...typography.body },
+  searchBlur: { borderRadius: 10, overflow: 'hidden', borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(0,0,0,0.08)' },
+  searchInput: { minHeight: 44, paddingHorizontal: spacing[3], color: colors.grey900, ...typography.body },
   sortRow: { flexDirection: 'row', gap: spacing[2] },
-  chip: { paddingHorizontal: spacing[3], paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: colors.grey200 },
-  chipActive: { borderColor: colors.blue500, backgroundColor: colors.blue50 },
+  chipBlur: { borderRadius: 20, overflow: 'hidden', borderWidth: 1, borderColor: colors.grey200 },
+  chipBlurActive: { borderColor: colors.blue500 },
+  chipInner: { paddingHorizontal: spacing[3], paddingVertical: 8 },
   chipText: { ...typography.bodySmall, color: colors.grey600, fontWeight: '600' },
   chipTextActive: { color: colors.blue500 },
   empty: { ...typography.body, color: colors.grey500, textAlign: 'center', paddingVertical: spacing[6] },

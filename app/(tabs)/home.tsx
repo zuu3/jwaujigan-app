@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Image, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Modal, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useHome } from '@/api/home';
 import { useLocalElection, ELECTION_TYPE_LABELS, ElectionType } from '@/api/local-election';
@@ -128,7 +128,15 @@ export default function HomeScreen() {
   );
 
   return (
-    <Screen>
+    <Screen
+      refreshControl={
+        <RefreshControl
+          refreshing={(homeQuery.isFetching || meQuery.isFetching) && !homeQuery.isLoading}
+          onRefresh={() => { void homeQuery.refetch(); void meQuery.refetch(); void politiciansQuery.refetch(); void electionQuery.refetch(); }}
+          tintColor={colors.blue500}
+        />
+      }
+    >
       {showGuide ? <GuideSheet onClose={closeGuide} /> : null}
 
       <View style={styles.hero}>
