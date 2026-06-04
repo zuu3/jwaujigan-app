@@ -1,6 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiGet, apiPost } from '@/api/client';
 
+export type MyPollItem = {
+  id: string;
+  question: string;
+  total_count: number;
+  expires_at: string;
+};
+
 export type PoliticalProfile = {
   economic_score: number;
   social_score: number;
@@ -90,6 +97,17 @@ export function useReferralInfo(token: string | null) {
   return useQuery({
     queryKey: ['me-referral', token ? 'authenticated' : 'anon'],
     queryFn: () => apiGet<ReferralInfo>('/api/me/referral', { token }),
+    enabled: Boolean(token),
+  });
+}
+
+export function useMyPolls(token: string | null) {
+  return useQuery({
+    queryKey: ['me-polls', token ? 'authenticated' : 'anon'],
+    queryFn: async () => {
+      const res = await apiGet<{ polls: MyPollItem[] }>('/api/me/polls', { token });
+      return res.polls;
+    },
     enabled: Boolean(token),
   });
 }

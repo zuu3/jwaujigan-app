@@ -9,6 +9,14 @@ export async function apiPost<T>(path: string, body?: unknown, options: ApiClien
   const res = await fetch(resolveUrl(path), { method: 'POST', headers: buildHeaders(options.token), body: body == null ? undefined : JSON.stringify(body) });
   return parseResponse<T>(res);
 }
+export async function apiPatch<T>(path: string, body?: unknown, options: ApiClientOptions = {}): Promise<T> {
+  const res = await fetch(resolveUrl(path), { method: 'PATCH', headers: buildHeaders(options.token), body: body == null ? undefined : JSON.stringify(body) });
+  return parseResponse<T>(res);
+}
+export async function apiDelete<T>(path: string, options: ApiClientOptions = {}): Promise<T> {
+  const res = await fetch(resolveUrl(path), { method: 'DELETE', headers: buildHeaders(options.token) });
+  return parseResponse<T>(res);
+}
 function resolveUrl(path: string) { if (path.startsWith('http')) return path; return API_BASE_URL + (path.startsWith('/') ? path : '/' + path); }
 function buildHeaders(token?: string | null) { return { 'Content-Type': 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : null) }; }
 async function parseResponse<T>(res: Response): Promise<T> {
