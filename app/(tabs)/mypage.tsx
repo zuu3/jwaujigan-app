@@ -164,7 +164,9 @@ export default function MyPageScreen() {
     try {
       await apiPatch('/api/me/visibility', { is_public: !isPublic }, { token });
       await queryClient.invalidateQueries({ queryKey: ['me'] });
-    } catch { /* ignore */ }
+    } catch {
+      Alert.alert('오류', '프로필 공개 설정 변경에 실패했어요.');
+    }
     setVisibilityLoading(false);
   }
 

@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { Image, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Image, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { usePoliticianDetail, useFollowPolitician } from '@/api/politicians';
 import { useMyFollows } from '@/api/mypage';
 import { useAuth } from '@/auth/auth-context';
@@ -70,12 +70,14 @@ export default function PoliticianDetailScreen() {
 
           {/* 팔로우 버튼 */}
           <Pressable
-            style={[styles.followBtn, isFollowing && styles.followBtnActive]}
-            onPress={() => followMutation.mutate()}
+            style={[styles.followBtn, isFollowing && styles.followBtnActive, followMutation.isPending && styles.followBtnDisabled]}
+            onPress={() => followMutation.mutate(undefined, {
+              onError: () => Alert.alert('오류', '팔로우 처리에 실패했어요. 다시 시도해 주세요.'),
+            })}
             disabled={followMutation.isPending}
           >
             <Text style={[styles.followText, isFollowing && styles.followTextActive]}>
-              {isFollowing ? '팔로잉 ✓' : '+ 팔로우'}
+              {followMutation.isPending ? '처리 중...' : isFollowing ? '팔로잉 ✓' : '+ 팔로우'}
             </Text>
           </Pressable>
 
@@ -129,6 +131,7 @@ const styles = StyleSheet.create({
   district: { ...typography.body, color: colors.grey600 },
   meta: { ...typography.bodySmall, color: colors.grey500 },
   followBtn: { minHeight: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 8, borderWidth: 1, borderColor: colors.grey200 },
+  followBtnDisabled: { opacity: 0.5 },
   followBtnActive: { borderColor: colors.blue500, backgroundColor: colors.blue50 },
   followText: { ...typography.body, color: colors.grey700, fontWeight: '600' },
   followTextActive: { color: colors.blue500 },

@@ -98,7 +98,13 @@ export default function ArenaBattleScreen() {
 
       if (turnIndex >= 5) {
         setPhase('result');
-        const judged = await judgeDebate(token, { issueTitle: issue.title, issueBody: issue.body, history: nextMessages });
+        const judgeTimeout = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('판정 시간이 초과됐어요. 다시 시도해 주세요.')), 30_000)
+        );
+        const judged = await Promise.race([
+          judgeDebate(token, { issueTitle: issue.title, issueBody: issue.body, history: nextMessages }),
+          judgeTimeout,
+        ]);
         setResult(judged);
         if (!logSavedRef.current) {
           logSavedRef.current = true;

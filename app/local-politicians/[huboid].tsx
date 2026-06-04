@@ -4,6 +4,7 @@ import { Image, Linking, Pressable, StyleSheet, Text, View } from 'react-native'
 import { useLocalElection, ELECTION_TYPE_LABELS } from '@/api/local-election';
 import type { ElectionType, ElectionPerson } from '@/api/local-election';
 import { useAuth } from '@/auth/auth-context';
+import { API_BASE_URL } from '@/api/client';
 import { Screen } from '@/components/screen';
 import { SkeletonCard } from '@/components/state-panels';
 import { colors } from '@/theme/colors';
@@ -60,7 +61,7 @@ export default function LocalPoliticianDetailScreen() {
     if (!electionType) return;
     const sgTypecode = PLEDGE_SG_TYPES[electionType];
     if (!sgTypecode) { setPledges([]); return; }
-    fetch(`https://jwj.zuu3.kr/api/election-pledge?huboid=${huboid}&sgTypecode=${sgTypecode}`)
+    fetch(`${API_BASE_URL}/api/election-pledge?huboid=${huboid}&sgTypecode=${sgTypecode}`)
       .then((r) => r.json())
       .then((d) => setPledges((d.pledges ?? []) as PledgeItem[]))
       .catch(() => setPledges([]));
