@@ -198,18 +198,18 @@ export default function MyPageScreen() {
             <View style={styles.levelRow}>
               <Text style={styles.levelTitle}>{level.title}</Text>
               <Text style={styles.levelSep}>•</Text>
-              <Text style={styles.levelPoints}>{points.toLocaleString()}점</Text>
+              <Text style={styles.levelPoints}>{(points ?? 0).toLocaleString()}점</Text>
             </View>
           ) : (
-            <Text style={styles.levelPoints}>{points.toLocaleString()}P</Text>
+            <Text style={styles.levelPoints}>{(points ?? 0).toLocaleString()}P</Text>
           )}
           {level ? (
             <View style={styles.progressRow}>
               <View style={styles.progressTrack}>
-                <View style={[styles.progressFill, { width: `${level.progress}%` }]} />
+                <View style={[styles.progressFill, { width: `${level.progress ?? 0}%` }]} />
               </View>
               <Text style={styles.progressLabel}>
-                {level.next !== null ? `다음 등급까지 ${(level.next - points).toLocaleString()}점` : '최고 등급'}
+                {level.next != null ? `다음 등급까지 ${((level.next - (points ?? 0)) ?? 0).toLocaleString()}점` : '최고 등급'}
               </Text>
             </View>
           ) : null}
@@ -382,7 +382,7 @@ export default function MyPageScreen() {
               <View key={poll.id} style={styles.pollItem}>
                 <Text style={styles.pollQuestion} numberOfLines={2}>{poll.question}</Text>
                 <View style={styles.pollMeta}>
-                  <Text style={styles.pollMetaText}>{poll.total_count.toLocaleString()}명 참여</Text>
+                  <Text style={styles.pollMetaText}>{(poll.total_count ?? 0).toLocaleString()}명 참여</Text>
                   <Text style={[styles.pollMetaText, expired && styles.pollExpired]}>{timeLabel}</Text>
                 </View>
               </View>
