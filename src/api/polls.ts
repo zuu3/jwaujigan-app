@@ -1,6 +1,17 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiGet, apiPost } from '@/api/client';
-import { PollDetail } from '@/types/domain';
+import type { Poll, PollDetail } from '@/types/domain';
+
+export function usePolls(sort: 'hot' | 'latest', token: string | null) {
+  return useQuery({
+    queryKey: ['polls', sort, token ? 'authenticated' : 'anonymous'],
+    queryFn: async () => {
+      const res = await apiGet<{ polls: Poll[] }>(`/api/polls?sort=${sort}`, { token });
+      return res.polls;
+    },
+    enabled: Boolean(token),
+  });
+}
 
 export function usePoll(pollId: string, token: string | null) {
   return useQuery({
