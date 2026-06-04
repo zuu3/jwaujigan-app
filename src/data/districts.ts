@@ -51,7 +51,7 @@ export function searchDistricts(query: string, province?: string | null): Distri
   const q = normalize(query);
   if (!q && !province) return [];
   let list = province ? DISTRICT_OPTIONS.filter((o) => o.province === province) : DISTRICT_OPTIONS;
-  if (!q) return list.slice(0, 20);
+  if (!q) return list;
   return list
     .map((o) => {
       const nd = normalize(o.districtLabel);
@@ -66,6 +66,6 @@ export function searchDistricts(query: string, province?: string | null): Distri
     })
     .filter((x) => x.score > 0)
     .sort((a, b) => b.score - a.score)
-    .slice(0, 8)
+    .slice(0, 30)
     .map((x) => x.o);
 }

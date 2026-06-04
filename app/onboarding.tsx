@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useQueryClient } from '@tanstack/react-query';
 import { saveDistrict, savePoliticalProfile, PoliticalProfileResult } from '@/api/onboarding';
 import { useAuth } from '@/auth/auth-context';
 import { Screen } from '@/components/screen';
@@ -29,7 +30,7 @@ function AxisBar({ label, score }: { label: string; score: number }) {
         <Text style={bar.end}>보수</Text>
         <View style={bar.track}>
           <View style={bar.center} />
-          <View style={[bar.fill, { width: (String(pct) + '%') as `${number}%`, backgroundColor: barColor }]} />
+          <View style={[bar.fill, { width: `${pct}%`, backgroundColor: barColor }]} />
         </View>
         <Text style={bar.end}>진보</Text>
       </View>
@@ -37,27 +38,34 @@ function AxisBar({ label, score }: { label: string; score: number }) {
   );
 }
 
+function shortProvince(p: string) {
+  return p.replace('특별시', '').replace('광역시', '').replace('특별자치시', '').replace('특별자치도', '').replace(/도$/, '').trim();
+}
+
 export default function OnboardingScreen() {
-  const { token } = useAuth();
+  const { token, updateUser } = useAuth();
+  const queryClient = useQueryClient();
   const [step, setStep] = useState<Step>('district');
 
-  // District step
   const [selectedDistrict, setSelectedDistrict] = useState<DistrictOption | null>(null);
   const [province, setProvince] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [savingDistrict, setSavingDistrict] = useState(false);
   const [districtError, setDistrictError] = useState<string | null>(null);
 
-  // Questions step
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  // Result
   const [result, setResult] = useState<PoliticalProfileResult | null>(null);
 
-  const matches = useMemo(() => searchDistricts(query, province), [query, province]);
+  const matches = useMemo(() => {
+    if (query.trim().length >= 1) return searchDistricts(query, null);
+    if (province) return DISTRICT_OPTIONS.filter((o) => o.province === province);
+    return [];
+  }, [query, province]);
+
   const question = questions[index];
   const answeredCount = Object.keys(answers).length;
 
@@ -67,6 +75,8 @@ export default function OnboardingScreen() {
     setDistrictError(null);
     try {
       await saveDistrict(token, selectedDistrict.displayLabel);
+      await updateUser({ district: selectedDistrict.displayLabel });
+      await queryClient.invalidateQueries({ queryKey: ['me'] });
       setStep('questions');
     } catch (e) {
       setDistrictError(e instanceof Error ? e.message : '저장에 실패했어요.');
@@ -87,6 +97,8 @@ export default function OnboardingScreen() {
     try {
       const r = await savePoliticalProfile(token, answers);
       setResult(r);
+      await queryClient.invalidateQueries({ queryKey: ['me'] });
+      await queryClient.invalidateQueries({ queryKey: ['me-political-profile'] });
       setStep('result');
     } catch (e) {
       setSubmitError(e instanceof Error ? e.message : '저장에 실패했어요.');
@@ -127,7 +139,7 @@ export default function OnboardingScreen() {
           <View style={styles.progressRow}>
             <Text style={styles.progressLabel}>질문 {index + 1} / {questions.length}</Text>
             <View style={styles.progressTrack}>
-              <View style={[styles.progressFill, { width: (String(progress) + '%') as `${number}%` }]} />
+              <View style={[styles.progressFill, { width: `${progress}%` }]} />
             </View>
           </View>
         </View>
@@ -191,64 +203,52 @@ export default function OnboardingScreen() {
         </View>
       ) : (
         <>
-          <View style={styles.searchRow}>
-            <TextInput
-              style={styles.searchInput}
-              value={query}
-              onChangeText={(t) => { setQuery(t); setProvince(null); }}
-              placeholder="지역구 검색 (예: 종로, 해운대)"
-              placeholderTextColor={colors.grey400}
-              clearButtonMode="while-editing"
-              autoCorrect={false}
-            />
-          </View>
-          <View style={styles.provinceRow}>
-            {PROVINCES.slice(0, 6).map((p) => (
-              <Pressable
-                key={p}
-                style={[styles.provinceChip, province === p && styles.provinceChipActive]}
-                onPress={() => { setProvince(province === p ? null : p); setQuery(''); }}
-              >
-                <Text style={[styles.provinceText, province === p && styles.provinceTextActive]}>
-                  {p.replace('특별시', '').replace('광역시', '').replace('특별자치시', '').replace('특별자치도', '').replace('도', '').trim()}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-          <View style={styles.provinceRow}>
-            {PROVINCES.slice(6).map((p) => (
-              <Pressable
-                key={p}
-                style={[styles.provinceChip, province === p && styles.provinceChipActive]}
-                onPress={() => { setProvince(province === p ? null : p); setQuery(''); }}
-              >
-                <Text style={[styles.provinceText, province === p && styles.provinceTextActive]}>
-                  {p.replace('특별시', '').replace('광역시', '').replace('특별자치시', '').replace('특별자치도', '').replace('도', '').trim()}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
+          <TextInput
+            style={styles.searchInput}
+            value={query}
+            onChangeText={(t) => { setQuery(t); setProvince(null); }}
+            placeholder="지역구 검색 (예: 종로, 해운대)"
+            placeholderTextColor={colors.grey400}
+            clearButtonMode="while-editing"
+            autoCorrect={false}
+            returnKeyType="search"
+          />
 
+          {/* 시도 필터 */}
+          {!query ? (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.provinceScroll}>
+              {PROVINCES.map((p) => (
+                <Pressable
+                  key={p}
+                  style={[styles.provinceChip, province === p && styles.provinceChipActive]}
+                  onPress={() => setProvince(province === p ? null : p)}
+                >
+                  <Text style={[styles.provinceText, province === p && styles.provinceTextActive]}>
+                    {shortProvince(p)}
+                  </Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+          ) : null}
+
+          {/* 결과 리스트 */}
           {matches.length > 0 ? (
             <View style={styles.resultList}>
               {matches.map((opt) => (
-                <Pressable key={opt.id} style={styles.resultItem} onPress={() => { setSelectedDistrict(opt); setQuery(''); }}>
+                <Pressable
+                  key={opt.id}
+                  style={styles.resultItem}
+                  onPress={() => { setSelectedDistrict(opt); setQuery(''); setProvince(null); }}
+                >
                   <Text style={styles.resultMain}>{opt.districtLabel}</Text>
-                  <Text style={styles.resultSub}>{opt.areaLabel} · {opt.province}</Text>
+                  <Text style={styles.resultSub}>{opt.areaLabel}{opt.province ? ` · ${shortProvince(opt.province)}` : ''}</Text>
                 </Pressable>
               ))}
             </View>
-          ) : query.length > 0 ? (
+          ) : query.trim().length >= 1 ? (
             <Text style={styles.empty}>"{query}"에 해당하는 지역구가 없어요.</Text>
-          ) : province ? (
-            <View style={styles.resultList}>
-              {DISTRICT_OPTIONS.filter((o) => o.province === province).slice(0, 15).map((opt) => (
-                <Pressable key={opt.id} style={styles.resultItem} onPress={() => setSelectedDistrict(opt)}>
-                  <Text style={styles.resultMain}>{opt.districtLabel}</Text>
-                  <Text style={styles.resultSub}>{opt.areaLabel}</Text>
-                </Pressable>
-              ))}
-            </View>
+          ) : !province ? (
+            <Text style={styles.hint2}>시도를 선택하거나 지역구 이름을 검색하세요.</Text>
           ) : null}
         </>
       )}
@@ -270,10 +270,9 @@ const styles = StyleSheet.create({
   eyebrow: { ...typography.bodySmall, color: colors.blue500, fontWeight: '700' },
   title: { ...typography.displayLarge, color: colors.grey900 },
   desc: { ...typography.body, color: colors.grey600 },
-  searchRow: { gap: spacing[2] },
   searchInput: { minHeight: 48, paddingHorizontal: spacing[3], borderRadius: 10, backgroundColor: colors.grey100, ...typography.body, color: colors.grey900 },
-  provinceRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] },
-  provinceChip: { paddingHorizontal: spacing[3], paddingVertical: 7, borderRadius: 20, borderWidth: 1, borderColor: colors.grey200 },
+  provinceScroll: { flexDirection: 'row', gap: spacing[2], paddingVertical: 2 },
+  provinceChip: { paddingHorizontal: spacing[3], paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: colors.grey200 },
   provinceChipActive: { borderColor: colors.blue500, backgroundColor: colors.blue50 },
   provinceText: { ...typography.bodySmall, color: colors.grey600, fontWeight: '600' },
   provinceTextActive: { color: colors.blue500 },
@@ -282,6 +281,7 @@ const styles = StyleSheet.create({
   resultMain: { ...typography.subtitle, color: colors.grey900 },
   resultSub: { ...typography.caption, color: colors.grey500, marginTop: 2 },
   empty: { ...typography.body, color: colors.grey500, textAlign: 'center', paddingVertical: spacing[4] },
+  hint2: { ...typography.body, color: colors.grey400, textAlign: 'center', paddingVertical: spacing[2] },
   selectedCard: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: spacing[4], borderRadius: 12, borderWidth: 2, borderColor: colors.blue500, backgroundColor: colors.blue50 },
   selectedInfo: { gap: 2 },
   selectedLabel: { ...typography.subtitle, color: colors.grey900 },

@@ -26,6 +26,7 @@ type AuthContextValue = {
   signInWithGoogleToken: (tokens: { idToken?: string; accessToken?: string }) => Promise<void>;
   signInWithDeepLink: (params: { token: string; user: AuthUser }) => Promise<void>;
   setDevelopmentToken: () => Promise<void>;
+  updateUser: (updates: Partial<AuthUser>) => Promise<void>;
   signOut: () => Promise<void>;
 };
 
@@ -71,6 +72,11 @@ export function AuthProvider({ children }: PropsWithChildren) {
       await SecureStore.setItemAsync(USER_KEY, JSON.stringify(nextUser));
       setTokenState(nextToken);
       setUserState(nextUser);
+    },
+    async updateUser(updates) {
+      const next = { ...user!, ...updates };
+      await SecureStore.setItemAsync(USER_KEY, JSON.stringify(next));
+      setUserState(next);
     },
     async signOut() {
       queryClient.clear();
