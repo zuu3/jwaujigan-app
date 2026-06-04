@@ -27,12 +27,13 @@ export function usePoliticianDetail(id: string, token: string | null) {
   });
 }
 
-export function useFollowPolitician(id: string, token: string | null) {
+export function useFollowPolitician(id: string, token: string | null, name?: string | null, image?: string | null) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: () => apiPost<{ following: boolean }>('/api/politicians/' + id + '/follow', {}, { token }),
+    mutationFn: () => apiPost<{ following: boolean }>('/api/politicians/' + id + '/follow', { name, image }, { token }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['me-follows'] });
+      void queryClient.invalidateQueries({ queryKey: ['me-political-profile'] });
     },
   });
 }

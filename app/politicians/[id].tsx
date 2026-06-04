@@ -28,7 +28,7 @@ export default function PoliticianDetailScreen() {
   const { token } = useAuth();
   const detailQuery = usePoliticianDetail(id, token);
   const followsQuery = useMyFollows(token);
-  const followMutation = useFollowPolitician(id, token);
+  const followMutation = useFollowPolitician(id, token, detailQuery.data?.name, detailQuery.data?.image);
 
   const pol = detailQuery.data;
   const isFollowing = (followsQuery.data ?? []).some((f) => f.id === id);
