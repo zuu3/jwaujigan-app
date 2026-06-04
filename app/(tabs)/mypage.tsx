@@ -219,7 +219,7 @@ export default function MyPageScreen() {
                 <View style={[styles.progressFill, { width: `${level.progress ?? 0}%` }]} />
               </View>
               <Text style={styles.progressLabel}>
-                {level.next != null ? `다음 등급까지 ${((level.next - (points ?? 0)) ?? 0).toLocaleString()}점` : '최고 등급'}
+                {level.next != null ? `다음 등급까지 ${(level.next - (points ?? 0)).toLocaleString()}점` : '최고 등급'}
               </Text>
             </View>
           ) : null}
