@@ -55,20 +55,23 @@ function CreatePollModal({ visible, onClose }: { visible: boolean; onClose: () =
   }
 
   return (
-    <Modal
-      visible={visible}
-      presentationStyle="pageSheet"
-      animationType="slide"
-      onRequestClose={close}
-    >
-      <KeyboardAvoidingView style={{ flex: 1, backgroundColor: 'transparent' }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <View style={[modal.sheet, { paddingBottom: insets.bottom + spacing[4] }]}>
-          {/* 제목 행 */}
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={close}>
+      <KeyboardAvoidingView style={modal.overlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <Pressable style={modal.backdrop} onPress={() => { Keyboard.dismiss(); close(); }} />
+        {/* BlurView = UIVisualEffectView → iOS 26에서 자동 Liquid Glass */}
+        <BlurView
+          intensity={100}
+          tint="systemUltraThinMaterial"
+          style={[modal.sheet, { paddingBottom: insets.bottom + spacing[4] }]}
+        >
           <View style={modal.header}>
-            <Text style={modal.title}>투표 만들기</Text>
-            <Pressable onPress={() => { Keyboard.dismiss(); close(); }} style={modal.closeBtn}>
-              <Text style={modal.closeBtnText}>닫기</Text>
-            </Pressable>
+            <View style={modal.handle} />
+            <View style={modal.titleRow}>
+              <Text style={modal.title}>투표 만들기</Text>
+              <Pressable onPress={() => { Keyboard.dismiss(); close(); }} style={modal.closeBtn}>
+                <Text style={modal.closeBtnText}>닫기</Text>
+              </Pressable>
+            </View>
           </View>
 
           <ScrollView
@@ -133,7 +136,7 @@ function CreatePollModal({ visible, onClose }: { visible: boolean; onClose: () =
               <Text style={modal.submitText}>{createMutation.isPending ? '등록 중...' : '투표 등록하기'}</Text>
             </Pressable>
           </ScrollView>
-        </View>
+        </BlurView>
       </KeyboardAvoidingView>
     </Modal>
   );
@@ -208,8 +211,12 @@ const styles = StyleSheet.create({
 });
 
 const modal = StyleSheet.create({
-  sheet: { flex: 1, backgroundColor: 'transparent' },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing[5], paddingTop: spacing[4], paddingBottom: spacing[2] },
+  overlay: { flex: 1, justifyContent: 'flex-end' },
+  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(2,9,19,0.45)' },
+  sheet: { borderTopLeftRadius: 20, borderTopRightRadius: 20, overflow: 'hidden', maxHeight: '92%' },
+  header: { paddingHorizontal: spacing[5], paddingTop: spacing[3] },
+  handle: { width: 36, height: 4, borderRadius: 2, backgroundColor: 'rgba(0,0,0,0.18)', alignSelf: 'center', marginBottom: spacing[3] },
+  titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingBottom: spacing[2] },
   title: { ...typography.headingLarge, color: colors.grey900 },
   closeBtn: { paddingVertical: spacing[2], paddingLeft: spacing[4] },
   closeBtnText: { ...typography.body, color: colors.blue500, fontWeight: '600' },
