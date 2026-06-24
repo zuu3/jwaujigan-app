@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
-import { Keyboard, KeyboardAvoidingView, Modal, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Animated, Easing, Keyboard, KeyboardAvoidingView, Modal, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GlassButton, GlassView } from '../../modules/glass-effect/src';
 import { usePolls, useCreatePoll } from '@/api/polls';
@@ -20,6 +20,8 @@ function randomId() {
 
 function CreatePollModal({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const insets = useSafeAreaInsets();
+  const progress = useRef(new Animated.Value(0)).current;
+  const [mounted, setMounted] = useState(visible);
   const { token } = useAuth();
   const createMutation = useCreatePoll(token);
   const [question, setQuestion] = useState('');
@@ -37,7 +39,31 @@ function CreatePollModal({ visible, onClose }: { visible: boolean; onClose: () =
     setError(null);
   }
 
-  function close() { reset(); onClose(); }
+  useEffect(() => {
+    if (visible) {
+      setMounted(true);
+      Animated.timing(progress, {
+        toValue: 1,
+        duration: 320,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }).start();
+    } else if (mounted) {
+      Animated.timing(progress, {
+        toValue: 0,
+        duration: 220,
+        easing: Easing.in(Easing.cubic),
+        useNativeDriver: true,
+      }).start(({ finished }) => {
+        if (finished) setMounted(false);
+      });
+    }
+  }, [mounted, progress, visible]);
+
+  function close() {
+    reset();
+    onClose();
+  }
 
   async function handleSubmit() {
     setError(null);
@@ -53,92 +79,120 @@ function CreatePollModal({ visible, onClose }: { visible: boolean; onClose: () =
     }
   }
 
+  const backdropOpacity = progress.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 1],
+  });
+  const sheetTranslateY = progress.interpolate({
+    inputRange: [0, 1],
+    outputRange: [80, 0],
+  });
+  const sheetScale = progress.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.98, 1],
+  });
+
+  if (!mounted) return null;
+
   return (
     <Modal
-      visible={visible}
+      visible={mounted}
       transparent
-      animationType="slide"
+      animationType="none"
       presentationStyle="overFullScreen"
       onRequestClose={close}
     >
       <KeyboardAvoidingView style={modal.slideContainer} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <Pressable style={modal.backdrop} onPress={() => { Keyboard.dismiss(); close(); }} />
-        <GlassView cornerRadius={24} style={[modal.sheet, { paddingBottom: insets.bottom + spacing[4] }]}>
-          <View style={modal.header}>
-            <View style={modal.handle} />
-            <View style={modal.titleRow}>
-              <Text style={modal.title}>투표 만들기</Text>
-              <GlassButton
-                systemImage="xmark"
-                onPress={() => { Keyboard.dismiss(); close(); }}
-                style={modal.closeBtn}
-              />
-            </View>
-          </View>
-
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-            contentContainerStyle={modal.scrollContent}
-          >
-            <Text style={modal.label}>질문</Text>
-            <TextInput
-              style={modal.input}
-              value={question}
-              onChangeText={setQuestion}
-              placeholder="어떤 주제로 투표할까요?"
-              placeholderTextColor={colors.grey400}
-              multiline
-              returnKeyType="next"
-              blurOnSubmit={false}
-            />
-
-            <Text style={[modal.label, modal.sectionGap]}>선택지 (2~4개)</Text>
-            <View style={{ gap: spacing[2] }}>
-              {options.map((opt, i) => (
-                <View key={opt.id} style={modal.optionRow}>
-                  <TextInput
-                    style={[modal.input, { flex: 1 }]}
-                    value={opt.text}
-                    onChangeText={(t) => setOptions((prev) => prev.map((o) => o.id === opt.id ? { ...o, text: t } : o))}
-                    placeholder={`선택지 ${i + 1}`}
-                    placeholderTextColor={colors.grey400}
-                    returnKeyType={i < options.length - 1 ? 'next' : 'done'}
-                  />
-                  {options.length > 2 ? (
-                    <Pressable onPress={() => setOptions((prev) => prev.filter((o) => o.id !== opt.id))} style={modal.removeBtn}>
-                      <Text style={modal.removeBtnText}>✕</Text>
-                    </Pressable>
-                  ) : null}
-                </View>
-              ))}
-            </View>
-            {options.length < 4 ? (
-              <Pressable style={{ marginTop: spacing[2] }} onPress={() => setOptions((prev) => [...prev, { id: randomId(), text: '' }])}>
-                <Text style={modal.addBtnText}>+ 선택지 추가</Text>
-              </Pressable>
-            ) : null}
-
-            <Text style={[modal.label, modal.sectionGap]}>마감 기간</Text>
-            <View style={modal.daysRow}>
-              {([1, 3, 7] as const).map((d) => (
-                <Pressable key={d} style={[modal.dayChip, days === d && modal.dayChipActive]} onPress={() => setDays(d)}>
-                  <Text style={[modal.dayText, days === d && modal.dayTextActive]}>{d}일</Text>
-                </Pressable>
-              ))}
+        <Animated.View style={[modal.backdrop, { opacity: backdropOpacity }]}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => { Keyboard.dismiss(); close(); }} />
+        </Animated.View>
+        <Animated.View
+          style={[
+            modal.sheetFrame,
+            {
+              paddingBottom: Math.max(insets.bottom, spacing[3]),
+              opacity: progress,
+              transform: [{ translateY: sheetTranslateY }, { scale: sheetScale }],
+            },
+          ]}
+        >
+          <GlassView cornerRadius={32} style={modal.sheet}>
+            <View style={modal.header}>
+              <View style={modal.handle} />
+              <View style={modal.titleRow}>
+                <Text style={modal.title}>투표 만들기</Text>
+                <GlassButton
+                  systemImage="xmark"
+                  onPress={() => { Keyboard.dismiss(); close(); }}
+                  style={modal.closeBtn}
+                />
+              </View>
             </View>
 
-            {error ? <Text style={modal.error}>{error}</Text> : null}
-
-            <Pressable
-              style={[modal.submitBtn, createMutation.isPending && modal.submitDisabled]}
-              onPress={() => { Keyboard.dismiss(); void handleSubmit(); }}
-              disabled={createMutation.isPending}
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={modal.scrollContent}
             >
-              <Text style={modal.submitText}>{createMutation.isPending ? '등록 중...' : '투표 등록하기'}</Text>
-            </Pressable>
-          </ScrollView>
-        </GlassView>
+              <Text style={modal.label}>질문</Text>
+              <TextInput
+                style={modal.input}
+                value={question}
+                onChangeText={setQuestion}
+                placeholder="어떤 주제로 투표할까요?"
+                placeholderTextColor={colors.grey400}
+                multiline
+                returnKeyType="next"
+                blurOnSubmit={false}
+              />
+
+              <Text style={[modal.label, modal.sectionGap]}>선택지 (2~4개)</Text>
+              <View style={{ gap: spacing[2] }}>
+                {options.map((opt, i) => (
+                  <View key={opt.id} style={modal.optionRow}>
+                    <TextInput
+                      style={[modal.input, { flex: 1 }]}
+                      value={opt.text}
+                      onChangeText={(t) => setOptions((prev) => prev.map((o) => o.id === opt.id ? { ...o, text: t } : o))}
+                      placeholder={`선택지 ${i + 1}`}
+                      placeholderTextColor={colors.grey400}
+                      returnKeyType={i < options.length - 1 ? 'next' : 'done'}
+                    />
+                    {options.length > 2 ? (
+                      <Pressable onPress={() => setOptions((prev) => prev.filter((o) => o.id !== opt.id))} style={modal.removeBtn}>
+                        <Text style={modal.removeBtnText}>×</Text>
+                      </Pressable>
+                    ) : null}
+                  </View>
+                ))}
+              </View>
+              {options.length < 4 ? (
+                <Pressable style={{ marginTop: spacing[2] }} onPress={() => setOptions((prev) => [...prev, { id: randomId(), text: '' }])}>
+                  <Text style={modal.addBtnText}>+ 선택지 추가</Text>
+                </Pressable>
+              ) : null}
+
+              <Text style={[modal.label, modal.sectionGap]}>마감 기간</Text>
+              <View style={modal.daysRow}>
+                {([1, 3, 7] as const).map((d) => (
+                  <Pressable key={d} style={[modal.dayChip, days === d && modal.dayChipActive]} onPress={() => setDays(d)}>
+                    <Text style={[modal.dayText, days === d && modal.dayTextActive]}>{d}일</Text>
+                  </Pressable>
+                ))}
+              </View>
+
+              {error ? <Text style={modal.error}>{error}</Text> : null}
+
+              <Pressable
+                style={[modal.submitBtn, createMutation.isPending && modal.submitDisabled]}
+                onPress={() => { Keyboard.dismiss(); void handleSubmit(); }}
+                disabled={createMutation.isPending}
+              >
+                <Text style={modal.submitText}>{createMutation.isPending ? '등록 중...' : '투표 등록하기'}</Text>
+              </Pressable>
+            </ScrollView>
+          </GlassView>
+        </Animated.View>
       </KeyboardAvoidingView>
     </Modal>
   );
@@ -212,33 +266,38 @@ const styles = StyleSheet.create({
 
 const modal = StyleSheet.create({
   slideContainer: { flex: 1, justifyContent: 'flex-end' },
-  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(2,9,19,0.32)' },
+  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(8,15,28,0.14)' },
+  sheetFrame: {
+    paddingHorizontal: spacing[3],
+  },
   sheet: {
     maxHeight: '92%',
     overflow: 'hidden',
-    borderRadius: 24,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    backgroundColor: 'rgba(255,255,255,0.88)',
+    borderRadius: 32,
+    backgroundColor: 'rgba(255,255,255,0.34)',
     borderWidth: 0.5,
-    borderColor: 'rgba(255,255,255,0.72)',
+    borderColor: 'rgba(255,255,255,0.8)',
+    shadowColor: '#000',
+    shadowOpacity: 0.18,
+    shadowRadius: 28,
+    shadowOffset: { width: 0, height: 16 },
   },
   header: { paddingHorizontal: spacing[5], paddingTop: spacing[3] },
-  handle: { width: 36, height: 4, borderRadius: 2, backgroundColor: colors.grey300, alignSelf: 'center', marginBottom: spacing[3] },
+  handle: { width: 38, height: 4, borderRadius: 2, backgroundColor: 'rgba(60,60,67,0.28)', alignSelf: 'center', marginBottom: spacing[3] },
   titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingBottom: spacing[2] },
   title: { ...typography.headingLarge, color: colors.grey900 },
   closeBtn: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 0.5, borderColor: 'rgba(0,0,0,0.12)' },
   scrollContent: { padding: spacing[5], paddingTop: spacing[3] },
   label: { ...typography.bodySmall, color: colors.grey700, fontWeight: '600', marginBottom: spacing[2] },
   sectionGap: { marginTop: spacing[4] },
-  input: { minHeight: 44, paddingHorizontal: spacing[3], paddingVertical: spacing[2], borderRadius: 8, borderWidth: 1, borderColor: 'rgba(0,0,0,0.08)', backgroundColor: 'rgba(255,255,255,0.78)', ...typography.body, color: colors.grey900 },
+  input: { minHeight: 44, paddingHorizontal: spacing[3], paddingVertical: spacing[2], borderRadius: 10, borderWidth: 0.5, borderColor: 'rgba(255,255,255,0.86)', backgroundColor: 'rgba(255,255,255,0.58)', ...typography.body, color: colors.grey900 },
   optionRow: { flexDirection: 'row', gap: spacing[2], alignItems: 'center' },
   removeBtn: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
   removeBtnText: { ...typography.body, color: colors.grey400 },
   addBtnText: { ...typography.body, color: colors.blue500, fontWeight: '600' },
   daysRow: { flexDirection: 'row', gap: spacing[2] },
-  dayChip: { paddingHorizontal: spacing[4], paddingVertical: spacing[2], borderRadius: 20, borderWidth: 1, borderColor: colors.grey200 },
-  dayChipActive: { borderColor: colors.blue500, backgroundColor: colors.blue50 },
+  dayChip: { paddingHorizontal: spacing[4], paddingVertical: spacing[2], borderRadius: 20, borderWidth: 0.5, borderColor: 'rgba(255,255,255,0.8)', backgroundColor: 'rgba(255,255,255,0.34)' },
+  dayChipActive: { borderColor: colors.blue500, backgroundColor: 'rgba(49,130,246,0.14)' },
   dayText: { ...typography.body, color: colors.grey600 },
   dayTextActive: { color: colors.blue500, fontWeight: '600' },
   error: { ...typography.bodySmall, color: colors.red500, marginTop: spacing[2] },
