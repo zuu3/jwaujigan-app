@@ -1,5 +1,5 @@
-import { BlurView } from 'expo-blur';
 import { router } from 'expo-router';
+import { GlassView } from '../../modules/glass-effect/src';
 import { useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { LocalElectionResponse, ElectionType, ElectionPerson } from '@/api/local-election';
@@ -134,9 +134,9 @@ export function LocalElectionSection({ isLoading, isError, data, onRetry, distri
           <Text style={styles.sub}>{wiwLabel}</Text>
         </View>
         <Pressable onPress={() => router.push('/ballot-preview')}>
-          <BlurView intensity={28} tint="light" style={styles.glassBtn}>
+          <GlassView cornerRadius={999} style={styles.glassBtn}>
             <Text style={styles.glassBtnText}>투표용지 미리보기</Text>
-          </BlurView>
+          </GlassView>
         </Pressable>
       </View>
 
@@ -144,9 +144,8 @@ export function LocalElectionSection({ isLoading, isError, data, onRetry, distri
       <View style={styles.tabRow}>
         {(['candidates', 'winners'] as const).map((t) => (
           <Pressable key={t} onPress={() => changeTab(t)}>
-            <BlurView
-              intensity={tab === t ? 40 : 20}
-              tint={tab === t ? 'light' : 'light'}
+            <GlassView
+              cornerRadius={999}
               style={[styles.glassTab, tab === t && styles.glassTabActive]}
             >
               <Text style={[styles.tabText, tab === t && styles.tabTextActive]}>
@@ -155,7 +154,7 @@ export function LocalElectionSection({ isLoading, isError, data, onRetry, distri
               <Text style={[styles.tabSub, tab === t && styles.tabSubActive]}>
                 {t === 'candidates' ? '9회 · 2026.6.3' : '8회 · 2022'}
               </Text>
-            </BlurView>
+            </GlassView>
           </Pressable>
         ))}
       </View>
@@ -217,34 +216,24 @@ const styles = StyleSheet.create({
   title: { ...typography.heading, color: colors.grey900 },
   sub: { ...typography.caption, color: colors.grey500 },
 
-  // Liquid glass: BlurView + 반투명 배경 + 얇은 하이라이트 테두리
+  // UIGlassEffect (native) — no manual bg/border needed, OS renders glass
   glassBtn: {
-    overflow: 'hidden',
-    borderRadius: 999,
     paddingHorizontal: spacing[3],
     paddingVertical: 6,
-    backgroundColor: 'rgba(255,255,255,0.45)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.7)',
   },
-  glassBtnText: { ...typography.caption, color: colors.grey700, fontWeight: '600' },
+  glassBtnText: { ...typography.caption, color: colors.grey800, fontWeight: '600' },
 
   tabRow: { flexDirection: 'row', gap: spacing[2] },
   glassTab: {
-    overflow: 'hidden',
-    borderRadius: 999,
     paddingHorizontal: spacing[3],
     paddingVertical: spacing[2],
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing[1],
-    backgroundColor: 'rgba(255,255,255,0.35)',
-    borderWidth: 1,
-    borderColor: 'rgba(200,210,220,0.5)',
   },
   glassTabActive: {
-    backgroundColor: 'rgba(49,130,246,0.12)',
-    borderColor: 'rgba(49,130,246,0.4)',
+    // active tint: subtle blue overlay on top of glass
+    backgroundColor: 'rgba(49,130,246,0.15)',
   },
   tabText: { ...typography.bodySmall, color: colors.grey600, fontWeight: '600' },
   tabTextActive: { color: colors.blue500 },
