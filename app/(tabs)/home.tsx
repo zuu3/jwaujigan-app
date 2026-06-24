@@ -164,7 +164,7 @@ export default function HomeScreen() {
       {district ? (
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>내 지역구 의원</Text>
+            <Text style={styles.sectionTitle}>내 지역구 국회의원</Text>
             <Text style={styles.sectionSub}>{district}</Text>
           </View>
           {politiciansQuery.isLoading ? <SkeletonList count={2} lines={2} /> : null}

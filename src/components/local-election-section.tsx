@@ -1,3 +1,4 @@
+import { BlurView } from 'expo-blur';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -44,20 +45,18 @@ function PersonCard({ person, tab }: { person: ElectionPerson; tab: 'candidates'
           </View>
         )}
         <View style={card.info}>
-          {tab === 'candidates' ? (
-            <View style={card.nameRow}>
+          <View style={card.nameRow}>
+            {tab === 'candidates' ? (
               <Text style={card.giho}>기호 {person.giho}</Text>
-              <Text style={card.name}>{person.name}</Text>
-            </View>
-          ) : (
+            ) : null}
             <Text style={card.name}>{person.name}</Text>
-          )}
+            <PartyBadge
+              party={person.jdName}
+              containerStyle={[card.partyTag, { backgroundColor: bg }]}
+              textStyle={[card.partyText, { color: text }]}
+            />
+          </View>
           {person.job ? <Text style={card.job}>{person.job}</Text> : null}
-          <PartyBadge
-            party={person.jdName}
-            containerStyle={[card.partyTag, { backgroundColor: bg }]}
-            textStyle={[card.partyText, { color: text }]}
-          />
         </View>
       </View>
       {(person.career1 || person.career2) ? (
@@ -131,24 +130,32 @@ export function LocalElectionSection({ isLoading, isError, data, onRetry, distri
       {/* 헤더 */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <Text style={styles.title}>지방선거</Text>
+          <Text style={styles.title}>내 지역 대표</Text>
           <Text style={styles.sub}>{wiwLabel}</Text>
         </View>
-        <Pressable style={styles.ballotBtn} onPress={() => router.push('/ballot-preview')}>
-          <Text style={styles.ballotBtnText}>투표용지 미리보기</Text>
+        <Pressable onPress={() => router.push('/ballot-preview')}>
+          <BlurView intensity={28} tint="light" style={styles.glassBtn}>
+            <Text style={styles.glassBtnText}>투표용지 미리보기</Text>
+          </BlurView>
         </Pressable>
       </View>
 
       {/* 탭 */}
       <View style={styles.tabRow}>
         {(['candidates', 'winners'] as const).map((t) => (
-          <Pressable key={t} style={[styles.tabBtn, tab === t && styles.tabBtnActive]} onPress={() => changeTab(t)}>
-            <Text style={[styles.tabText, tab === t && styles.tabTextActive]}>
-              {t === 'candidates' ? '이번 후보자' : '현직'}
-            </Text>
-            <Text style={[styles.tabSub, tab === t && styles.tabSubActive]}>
-              {t === 'candidates' ? '9회 · 2026.6.3' : '8회 · 2022'}
-            </Text>
+          <Pressable key={t} onPress={() => changeTab(t)}>
+            <BlurView
+              intensity={tab === t ? 40 : 20}
+              tint={tab === t ? 'light' : 'light'}
+              style={[styles.glassTab, tab === t && styles.glassTabActive]}
+            >
+              <Text style={[styles.tabText, tab === t && styles.tabTextActive]}>
+                {t === 'candidates' ? '이번 후보자' : '현직'}
+              </Text>
+              <Text style={[styles.tabSub, tab === t && styles.tabSubActive]}>
+                {t === 'candidates' ? '9회 · 2026.6.3' : '8회 · 2022'}
+              </Text>
+            </BlurView>
           </Pressable>
         ))}
       </View>
@@ -206,18 +213,44 @@ export function LocalElectionSection({ isLoading, isError, data, onRetry, distri
 const styles = StyleSheet.create({
   wrap: { gap: spacing[3] },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  headerLeft: { flexDirection: 'row', alignItems: 'baseline', gap: spacing[2] },
+  headerLeft: { gap: 2 },
   title: { ...typography.heading, color: colors.grey900 },
-  sub: { ...typography.bodySmall, color: colors.grey500 },
-  ballotBtn: { paddingHorizontal: spacing[3], paddingVertical: 4, borderRadius: 999, borderWidth: 1, borderColor: colors.blue500, backgroundColor: colors.blue50 },
-  ballotBtnText: { ...typography.caption, color: colors.blue500, fontWeight: '600' },
+  sub: { ...typography.caption, color: colors.grey500 },
+
+  // Liquid glass: BlurView + 반투명 배경 + 얇은 하이라이트 테두리
+  glassBtn: {
+    overflow: 'hidden',
+    borderRadius: 999,
+    paddingHorizontal: spacing[3],
+    paddingVertical: 6,
+    backgroundColor: 'rgba(255,255,255,0.45)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.7)',
+  },
+  glassBtnText: { ...typography.caption, color: colors.grey700, fontWeight: '600' },
+
   tabRow: { flexDirection: 'row', gap: spacing[2] },
-  tabBtn: { paddingHorizontal: spacing[3], paddingVertical: spacing[2], borderRadius: 999, borderWidth: 1, borderColor: colors.grey200, flexDirection: 'row', alignItems: 'center', gap: spacing[1] },
-  tabBtnActive: { borderColor: colors.blue500, backgroundColor: colors.blue50 },
+  glassTab: {
+    overflow: 'hidden',
+    borderRadius: 999,
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[2],
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[1],
+    backgroundColor: 'rgba(255,255,255,0.35)',
+    borderWidth: 1,
+    borderColor: 'rgba(200,210,220,0.5)',
+  },
+  glassTabActive: {
+    backgroundColor: 'rgba(49,130,246,0.12)',
+    borderColor: 'rgba(49,130,246,0.4)',
+  },
   tabText: { ...typography.bodySmall, color: colors.grey600, fontWeight: '600' },
   tabTextActive: { color: colors.blue500 },
   tabSub: { ...typography.caption, color: colors.grey400 },
   tabSubActive: { color: colors.blue500, opacity: 0.8 },
+
   typeNav: { flexDirection: 'row', alignItems: 'center', gap: spacing[2] },
   navArrow: { width: 32, height: 32, borderRadius: 8, borderWidth: 1, borderColor: colors.grey200, alignItems: 'center', justifyContent: 'center' },
   navArrowDisabled: { opacity: 0.3 },
@@ -238,11 +271,11 @@ const card = StyleSheet.create({
   photoFallback: { width: 44, height: 56, borderRadius: 6, backgroundColor: colors.grey100, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   initial: { ...typography.subtitle, color: colors.grey400 },
   info: { flex: 1, gap: 4 },
-  nameRow: { flexDirection: 'row', alignItems: 'center', gap: spacing[1] },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: spacing[2], flexWrap: 'wrap' },
   giho: { ...typography.caption, color: colors.grey400 },
   name: { ...typography.subtitle, color: colors.grey900 },
   job: { ...typography.caption, color: colors.grey500 },
-  partyTag: { alignSelf: 'flex-start', paddingHorizontal: spacing[2], paddingVertical: 2, borderRadius: 4 },
+  partyTag: { paddingHorizontal: spacing[2], paddingVertical: 2, borderRadius: 4 },
   partyText: { ...typography.caption, fontWeight: '600' },
   careers: { gap: 2, paddingTop: 2 },
   career: { ...typography.caption, color: colors.grey600, lineHeight: 18 },
