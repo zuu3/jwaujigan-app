@@ -62,6 +62,7 @@ export default function ArenaBattleScreen() {
   const [phase, setPhase] = useState<Phase>('ai-turn');
   const [streamingText, setStreamingText] = useState('');
   const [streamingRole, setStreamingRole] = useState<'progressive' | 'conservative'>('progressive');
+  const [isAwaitingAi, setIsAwaitingAi] = useState(false);
   const [argument, setArgument] = useState('');
   const [result, setResult] = useState<DebateResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -89,6 +90,7 @@ export default function ArenaBattleScreen() {
     const currentRound = Math.min(Math.floor(turnIndex / 2) + 1, 3);
     setStreamingRole(speakerStance);
     setStreamingText('');
+    setIsAwaitingAi(true);
     setError(null);
 
     try {
@@ -105,9 +107,7 @@ export default function ArenaBattleScreen() {
       let aiText = '';
 
       try {
-        aiText = await streamDebateTurn(token, payload, (chunk) => {
-          setStreamingText((prev) => prev + chunk);
-        });
+        aiText = await streamDebateTurn(token, payload, () => {});
         if (!aiText.trim()) {
           throw new StreamingUnsupportedError();
         }
@@ -115,8 +115,9 @@ export default function ArenaBattleScreen() {
         if (!(streamErr instanceof StreamingUnsupportedError)) throw streamErr;
         const response = await requestDebateTurn(token, payload);
         aiText = response.text;
-        await revealText(aiText);
       }
+      setIsAwaitingAi(false);
+      await revealText(aiText);
 
       const nextMessages: DebateMessage[] = [...messagesRef.current, { role: speakerStance as DebateMessage['role'], content: aiText }];
       messagesRef.current = nextMessages;
@@ -141,6 +142,7 @@ export default function ArenaBattleScreen() {
         setPhase('between-turns');
       }
     } catch (err) {
+      setIsAwaitingAi(false);
       setError(err instanceof Error ? err.message : '토론을 이어가지 못했어요.');
       setPhase('between-turns');
     } finally {
@@ -151,13 +153,13 @@ export default function ArenaBattleScreen() {
   async function revealText(text: string) {
     setStreamingText('');
     const chars = Array.from(text);
-    const chunkSize = chars.length > 900 ? 4 : chars.length > 450 ? 3 : 2;
+    const chunkSize = chars.length > 900 ? 2 : 1;
     let visible = '';
 
     for (let i = 0; i < chars.length; i += chunkSize) {
       visible += chars.slice(i, i + chunkSize).join('');
       setStreamingText(visible);
-      await wait(16);
+      await wait(34);
     }
   }
 
@@ -194,6 +196,7 @@ export default function ArenaBattleScreen() {
     setError(null);
     setArgument('');
     setStreamingText('');
+    setIsAwaitingAi(false);
   }
 
   const stanceLabel = userStance === 'watch' ? 'AI 배틀 구경 중' : userStance === 'progressive' ? '진보 AI 응원 중' : '보수 AI 응원 중';
@@ -201,6 +204,7 @@ export default function ArenaBattleScreen() {
   // FlatList 아이템: header + messages + streaming + footer
   const allMessages = [
     ...messages,
+    ...(isAwaitingAi ? [{ role: streamingRole as DebateMessage['role'], content: '응답 생성 중...' }] : []),
     ...(streamingText ? [{ role: streamingRole as DebateMessage['role'], content: streamingText + '▌' }] : []),
   ];
 
