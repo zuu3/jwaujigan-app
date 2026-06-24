@@ -1,6 +1,6 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Animated, Easing, FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   judgeDebate,
@@ -19,6 +19,7 @@ import { spacing } from '@/theme/spacing';
 import { typography } from '@/theme/typography';
 
 type Phase = 'ai-turn' | 'between-turns' | 'intervention' | 'result';
+type DisplayMessage = DebateMessage & { pending?: boolean };
 
 const MAX_ARG = 200;
 
@@ -68,6 +69,7 @@ export default function ArenaBattleScreen() {
   const [error, setError] = useState<string | null>(null);
 
   const listRef = useRef<FlatList>(null);
+  const shimmer = useRef(new Animated.Value(0)).current;
   const startedRef = useRef(false);
   const runningTurnRef = useRef<number | null>(null);
   const messagesRef = useRef<DebateMessage[]>([]);
@@ -83,6 +85,24 @@ export default function ArenaBattleScreen() {
     void runTurn();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, turnIndex, issue, issueQuery.isLoading]);
+
+  useEffect(() => {
+    if (!isAwaitingAi) {
+      shimmer.stopAnimation();
+      shimmer.setValue(0);
+      return;
+    }
+    const loop = Animated.loop(
+      Animated.timing(shimmer, {
+        toValue: 1,
+        duration: 1200,
+        easing: Easing.inOut(Easing.ease),
+        useNativeDriver: true,
+      }),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [isAwaitingAi, shimmer]);
 
   async function runTurn() {
     if (!issue) return;
@@ -202,9 +222,9 @@ export default function ArenaBattleScreen() {
   const stanceLabel = userStance === 'watch' ? 'AI 배틀 구경 중' : userStance === 'progressive' ? '진보 AI 응원 중' : '보수 AI 응원 중';
 
   // FlatList 아이템: header + messages + streaming + footer
-  const allMessages = [
+  const allMessages: DisplayMessage[] = [
     ...messages,
-    ...(isAwaitingAi ? [{ role: streamingRole as DebateMessage['role'], content: '응답 생성 중...' }] : []),
+    ...(isAwaitingAi ? [{ role: streamingRole as DebateMessage['role'], content: '', pending: true }] : []),
     ...(streamingText ? [{ role: streamingRole as DebateMessage['role'], content: streamingText + '▌' }] : []),
   ];
 
@@ -300,11 +320,32 @@ export default function ArenaBattleScreen() {
         renderItem={({ item: msg }) => (
           <View style={[styles.message, { backgroundColor: roleBg(msg.role) }]}>
             <Text style={[styles.messageRole, { color: roleColor(msg.role) }]}>{roleLabel(msg.role, userStance)}</Text>
-            <Text style={styles.messageText}>{msg.content}</Text>
+            {msg.pending ? (
+              <PendingMessage shimmer={shimmer} />
+            ) : (
+              <Text style={styles.messageText}>{msg.content}</Text>
+            )}
           </View>
         )}
       />
     </SafeAreaView>
+  );
+}
+
+function PendingMessage({ shimmer }: { shimmer: Animated.Value }) {
+  const translateX = shimmer.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-140, 260],
+  });
+
+  return (
+    <View style={styles.pendingWrap}>
+      {[0.92, 0.74, 0.54].map((width, index) => (
+        <View key={index} style={[styles.pendingLine, { width: `${width * 100}%` }]}>
+          <Animated.View style={[styles.pendingShine, { transform: [{ translateX }] }]} />
+        </View>
+      ))}
+    </View>
   );
 }
 
@@ -325,6 +366,9 @@ const styles = StyleSheet.create({
   message: { gap: spacing[2], padding: spacing[4], borderRadius: 12, marginBottom: spacing[3] },
   messageRole: { ...typography.caption, fontWeight: '700' },
   messageText: { ...typography.body, color: colors.grey900 },
+  pendingWrap: { gap: 8, paddingVertical: 2 },
+  pendingLine: { height: 13, borderRadius: 999, overflow: 'hidden', backgroundColor: 'rgba(255,255,255,0.55)' },
+  pendingShine: { width: 80, height: 13, backgroundColor: 'rgba(255,255,255,0.9)' },
   interventionPanel: { gap: spacing[2], padding: spacing[4], borderRadius: 12, borderWidth: 1, borderColor: colors.grey200 },
   interventionHint: { ...typography.bodySmall, color: colors.grey600 },
   interventionActions: { flexDirection: 'row', gap: spacing[2] },
