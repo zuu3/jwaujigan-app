@@ -63,7 +63,7 @@ function CreatePollModal({ visible, onClose }: { visible: boolean; onClose: () =
     >
       <KeyboardAvoidingView style={modal.slideContainer} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <Pressable style={modal.backdrop} onPress={() => { Keyboard.dismiss(); close(); }} />
-        <GlassView style={[modal.sheet, { paddingBottom: insets.bottom + spacing[4] }]}>
+        <GlassView cornerRadius={24} style={[modal.sheet, { paddingBottom: insets.bottom + spacing[4] }]}>
           <View style={modal.header}>
             <View style={modal.handle} />
             <View style={modal.titleRow}>
@@ -216,9 +216,10 @@ const modal = StyleSheet.create({
   sheet: {
     maxHeight: '92%',
     overflow: 'hidden',
+    borderRadius: 24,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    backgroundColor: 'rgba(255,255,255,0.72)',
+    backgroundColor: 'rgba(255,255,255,0.88)',
     borderWidth: 0.5,
     borderColor: 'rgba(255,255,255,0.72)',
   },
