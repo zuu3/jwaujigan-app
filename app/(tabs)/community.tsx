@@ -121,11 +121,9 @@ function CreatePollModal({ visible, onClose }: { visible: boolean; onClose: () =
               <View style={modal.handle} />
               <View style={modal.titleRow}>
                 <Text style={modal.title}>투표 만들기</Text>
-                <GlassButton
-                  systemImage="xmark"
-                  onPress={() => { Keyboard.dismiss(); close(); }}
-                  style={modal.closeBtn}
-                />
+                <Pressable style={modal.closeBtn} onPress={() => { Keyboard.dismiss(); close(); }} hitSlop={10}>
+                  <Text style={modal.closeText}>×</Text>
+                </Pressable>
               </View>
             </View>
 
@@ -266,7 +264,7 @@ const styles = StyleSheet.create({
 
 const modal = StyleSheet.create({
   slideContainer: { flex: 1, justifyContent: 'flex-end' },
-  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(8,15,28,0.14)' },
+  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(8,15,28,0.22)' },
   sheetFrame: {
     paddingHorizontal: spacing[3],
   },
@@ -274,7 +272,7 @@ const modal = StyleSheet.create({
     maxHeight: '92%',
     overflow: 'hidden',
     borderRadius: 32,
-    backgroundColor: 'rgba(255,255,255,0.34)',
+    backgroundColor: 'rgba(246,248,251,0.82)',
     borderWidth: 0.5,
     borderColor: 'rgba(255,255,255,0.8)',
     shadowColor: '#000',
@@ -286,17 +284,18 @@ const modal = StyleSheet.create({
   handle: { width: 38, height: 4, borderRadius: 2, backgroundColor: 'rgba(60,60,67,0.28)', alignSelf: 'center', marginBottom: spacing[3] },
   titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingBottom: spacing[2] },
   title: { ...typography.headingLarge, color: colors.grey900 },
-  closeBtn: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 0.5, borderColor: 'rgba(0,0,0,0.12)' },
+  closeBtn: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.58)', borderWidth: 0.5, borderColor: 'rgba(0,0,0,0.08)' },
+  closeText: { fontSize: 28, lineHeight: 30, color: colors.grey700, fontWeight: '300' },
   scrollContent: { padding: spacing[5], paddingTop: spacing[3] },
   label: { ...typography.bodySmall, color: colors.grey700, fontWeight: '600', marginBottom: spacing[2] },
   sectionGap: { marginTop: spacing[4] },
-  input: { minHeight: 44, paddingHorizontal: spacing[3], paddingVertical: spacing[2], borderRadius: 10, borderWidth: 0.5, borderColor: 'rgba(255,255,255,0.86)', backgroundColor: 'rgba(255,255,255,0.58)', ...typography.body, color: colors.grey900 },
+  input: { minHeight: 44, paddingHorizontal: spacing[3], paddingVertical: spacing[2], borderRadius: 10, borderWidth: 0.5, borderColor: 'rgba(0,0,0,0.06)', backgroundColor: 'rgba(255,255,255,0.78)', ...typography.body, color: colors.grey900 },
   optionRow: { flexDirection: 'row', gap: spacing[2], alignItems: 'center' },
   removeBtn: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
   removeBtnText: { ...typography.body, color: colors.grey400 },
   addBtnText: { ...typography.body, color: colors.blue500, fontWeight: '600' },
   daysRow: { flexDirection: 'row', gap: spacing[2] },
-  dayChip: { paddingHorizontal: spacing[4], paddingVertical: spacing[2], borderRadius: 20, borderWidth: 0.5, borderColor: 'rgba(255,255,255,0.8)', backgroundColor: 'rgba(255,255,255,0.34)' },
+  dayChip: { paddingHorizontal: spacing[4], paddingVertical: spacing[2], borderRadius: 20, borderWidth: 0.5, borderColor: 'rgba(0,0,0,0.06)', backgroundColor: 'rgba(255,255,255,0.55)' },
   dayChipActive: { borderColor: colors.blue500, backgroundColor: 'rgba(49,130,246,0.14)' },
   dayText: { ...typography.body, color: colors.grey600 },
   dayTextActive: { color: colors.blue500, fontWeight: '600' },
