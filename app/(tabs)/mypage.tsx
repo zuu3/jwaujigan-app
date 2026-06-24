@@ -140,6 +140,7 @@ export default function MyPageScreen() {
 
   const displayName = profile?.name ?? user?.name ?? '사용자';
   const email = profile?.email ?? user?.email ?? '';
+  const avatarUrl = profile?.image ?? user?.image ?? null;
   const district = profile?.district ?? user?.district ?? null;
   const points = profile?.points ?? 0;
   const streak = activity?.streak ?? profile?.streak ?? 0;
@@ -197,9 +198,13 @@ export default function MyPageScreen() {
 
       {/* 프로필 */}
       <View style={styles.profileCard}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{getInitial(displayName, email)}</Text>
-        </View>
+        {avatarUrl ? (
+          <Image source={{ uri: avatarUrl }} style={styles.avatar} />
+        ) : (
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>{getInitial(displayName, email)}</Text>
+          </View>
+        )}
         <View style={styles.profileInfo}>
           <Text style={styles.name}>{displayName}</Text>
           <Text style={styles.email}>{email}</Text>

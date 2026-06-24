@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { LocalElectionResponse, ElectionType, ElectionPerson } from '@/api/local-election';
 import { ELECTION_TYPE_LABELS } from '@/api/local-election';
+import { PartyBadge } from '@/components/party-badge';
 import { SkeletonList, ErrorPanel } from '@/components/state-panels';
 import { colors } from '@/theme/colors';
 import { spacing } from '@/theme/spacing';
@@ -52,9 +53,11 @@ function PersonCard({ person, tab }: { person: ElectionPerson; tab: 'candidates'
             <Text style={card.name}>{person.name}</Text>
           )}
           {person.job ? <Text style={card.job}>{person.job}</Text> : null}
-          <View style={[card.partyTag, { backgroundColor: bg }]}>
-            <Text style={[card.partyText, { color: text }]}>{person.jdName}</Text>
-          </View>
+          <PartyBadge
+            party={person.jdName}
+            containerStyle={[card.partyTag, { backgroundColor: bg }]}
+            textStyle={[card.partyText, { color: text }]}
+          />
         </View>
       </View>
       {(person.career1 || person.career2) ? (

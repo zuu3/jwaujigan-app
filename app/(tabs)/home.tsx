@@ -10,6 +10,7 @@ import { useLocalPoliticians } from '@/api/politicians';
 import { useAuth } from '@/auth/auth-context';
 import { IssueCard } from '@/components/issue-card';
 import { LocalElectionSection } from '@/components/local-election-section';
+import { PartyBadge } from '@/components/party-badge';
 import { PollCard } from '@/components/poll-card';
 import { Screen } from '@/components/screen';
 import { ErrorPanel, SkeletonList } from '@/components/state-panels';
@@ -185,9 +186,11 @@ export default function HomeScreen() {
               <View style={styles.politicianInfo}>
                 <View style={styles.politicianNameRow}>
                   <Text style={styles.politicianName}>{pol.name}</Text>
-                  <View style={[styles.partyBadge, { borderColor: partyColor(pol.party) }]}>
-                    <Text style={[styles.partyText, { color: partyColor(pol.party) }]}>{pol.party}</Text>
-                  </View>
+                  <PartyBadge
+                    party={pol.party}
+                    containerStyle={[styles.partyBadge, { borderColor: partyColor(pol.party) }]}
+                    textStyle={[styles.partyText, { color: partyColor(pol.party) }]}
+                  />
                 </View>
                 {pol.committee ? <Text style={styles.politicianMeta}>{pol.committee}</Text> : null}
                 {pol.reelection ? <Text style={styles.politicianMeta}>{pol.reelection}</Text> : null}

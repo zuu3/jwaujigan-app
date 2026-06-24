@@ -2,6 +2,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { usePoll, useVotePoll } from '@/api/polls';
 import { useAuth } from '@/auth/auth-context';
+import { CommentSection } from '@/components/comment-section';
 import { Screen } from '@/components/screen';
 import { ErrorPanel, SkeletonCard } from '@/components/state-panels';
 import { colors } from '@/theme/colors';
@@ -112,6 +113,8 @@ export default function PollDetailScreen() {
               {voteMutation.error instanceof Error ? voteMutation.error.message : '투표에 실패했어요. 다시 시도해 주세요.'}
             </Text>
           ) : null}
+
+          <CommentSection pollId={id} token={token} />
         </>
       ) : null}
     </Screen>

@@ -3,6 +3,7 @@ import { Alert, Image, Linking, Pressable, StyleSheet, Text, View } from 'react-
 import { usePoliticianDetail, useFollowPolitician } from '@/api/politicians';
 import { useMyFollows } from '@/api/mypage';
 import { useAuth } from '@/auth/auth-context';
+import { PartyBadge } from '@/components/party-badge';
 import { Screen } from '@/components/screen';
 import { ErrorPanel, SkeletonCard } from '@/components/state-panels';
 import { colors } from '@/theme/colors';
@@ -59,9 +60,11 @@ export default function PoliticianDetailScreen() {
             </View>
             <View style={styles.profileInfo}>
               <Text style={styles.name}>{pol.name}</Text>
-              <View style={[styles.partyBadge, { borderColor: partyC }]}>
-                <Text style={[styles.partyText, { color: partyC }]}>{pol.party}</Text>
-              </View>
+              <PartyBadge
+                party={pol.party}
+                containerStyle={[styles.partyBadge, { borderColor: partyC }]}
+                textStyle={[styles.partyText, { color: partyC }]}
+              />
               <Text style={styles.district}>{pol.district}</Text>
               {pol.committee ? <Text style={styles.meta}>{pol.committee}</Text> : null}
               {pol.reelection ? <Text style={styles.meta}>{pol.reelection}</Text> : null}

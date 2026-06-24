@@ -5,6 +5,7 @@ import { useLocalElection, ELECTION_TYPE_LABELS } from '@/api/local-election';
 import type { ElectionType, ElectionPerson } from '@/api/local-election';
 import { useAuth } from '@/auth/auth-context';
 import { API_BASE_URL } from '@/api/client';
+import { PartyBadge } from '@/components/party-badge';
 import { Screen } from '@/components/screen';
 import { SkeletonCard } from '@/components/state-panels';
 import { colors } from '@/theme/colors';
@@ -92,9 +93,11 @@ export default function LocalPoliticianDetailScreen() {
                 <Text style={styles.name}>{person.name}</Text>
               </View>
               {person.job ? <Text style={styles.job}>{person.job}</Text> : null}
-              <View style={[styles.partyTag, { backgroundColor: bg }]}>
-                <Text style={[styles.partyText, { color: text }]}>{person.jdName}</Text>
-              </View>
+              <PartyBadge
+                party={person.jdName}
+                containerStyle={[styles.partyTag, { backgroundColor: bg }]}
+                textStyle={[styles.partyText, { color: text }]}
+              />
               {electionType ? (
                 <Text style={styles.electionType}>{ELECTION_TYPE_LABELS[electionType]}</Text>
               ) : null}
