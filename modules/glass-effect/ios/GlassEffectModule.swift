@@ -64,12 +64,12 @@ public class GlassEffectModule: Module {
 // MARK: - GlassButton
 
 class GlassButtonView: ExpoView {
-  let onPress = EventDispatcher()
+  let onGlassPress = EventDispatcher()
   private var button: UIButton!
 
   required init(appContext: AppContext? = nil) {
     super.init(appContext: appContext)
-    let action = UIAction { [weak self] _ in self?.onPress([:]) }
+    let action = UIAction { [weak self] _ in self?.onGlassPress([:]) }
     if #available(iOS 26.0, *) {
       var cfg = UIButton.Configuration.glass()
       cfg.cornerStyle = .capsule
@@ -126,7 +126,7 @@ public class GlassButtonModule: Module {
     Name("GlassButton")
 
     View(GlassButtonView.self) {
-      Events("onPress")
+      Events("onGlassPress")
       Prop("label") { (view: GlassButtonView, text: String) in view.setLabel(text) }
       Prop("systemImage") { (view: GlassButtonView, name: String) in view.setSystemImage(name) }
       Prop("tintHex") { (view: GlassButtonView, hex: String) in view.setTintHex(hex) }

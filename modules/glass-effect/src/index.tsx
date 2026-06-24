@@ -42,7 +42,7 @@ type NativeGlassButtonProps = {
   label?: string;
   systemImage?: string;
   tintHex?: string;
-  onPress?: (e: { nativeEvent: object }) => void;
+  onGlassPress?: (e: { nativeEvent: object }) => void;
   style?: StyleProp<ViewStyle>;
 };
 
@@ -65,7 +65,7 @@ export function GlassButton({ label, systemImage, tintColor, onPress, style }: G
         label={label ?? ''}
         systemImage={systemImage ?? ''}
         tintHex={tintColor ?? ''}
-        onPress={onPress ? () => onPress() : undefined}
+        onGlassPress={onPress ? () => onPress() : undefined}
         style={style}
       />
     );
