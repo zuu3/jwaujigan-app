@@ -1,7 +1,11 @@
 import { apiPost } from '@/api/client';
 
-export function saveDistrict(token: string | null, district: string) {
-  return apiPost<{ district: string; province: string | null; matchedArea: string | null }>('/api/district', { district }, { token });
+export function saveDistrict(token: string | null, district: string, matchedArea?: string | null) {
+  return apiPost<{ district: string; province: string | null; matchedArea: string | null }>(
+    '/api/district',
+    { district, matchedArea: matchedArea ?? null },
+    { token },
+  );
 }
 
 export type PoliticalProfileResult = {

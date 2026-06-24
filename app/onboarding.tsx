@@ -75,9 +75,10 @@ export default function OnboardingScreen() {
     setSavingDistrict(true);
     setDistrictError(null);
     try {
-      const saved = await saveDistrict(token, selectedDistrict.district);
-      await updateUser({ district: saved.district });
+      const saved = await saveDistrict(token, selectedDistrict.district, selectedDistrict.area);
+      await updateUser({ district: saved.district, area: saved.matchedArea });
       await queryClient.invalidateQueries({ queryKey: ['me'] });
+      await queryClient.invalidateQueries({ queryKey: ['local-election'] });
       setStep('questions');
     } catch (e) {
       setDistrictError(e instanceof Error ? e.message : '저장에 실패했어요.');

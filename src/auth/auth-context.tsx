@@ -12,6 +12,7 @@ export type AuthUser = {
   name: string | null;
   image: string | null;
   district?: string | null;
+  area?: string | null;
 };
 
 type AuthResponse = {
@@ -66,7 +67,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       setUserState(user);
     },
     async setDevelopmentToken() {
-      const nextUser = { id: 'development', email: 'dev@local', name: '개발 사용자', image: null, district: null };
+      const nextUser = { id: 'development', email: 'dev@local', name: '개발 사용자', image: null, district: null, area: null };
       const nextToken = 'development-mobile-token';
       await SecureStore.setItemAsync(TOKEN_KEY, nextToken);
       await SecureStore.setItemAsync(USER_KEY, JSON.stringify(nextUser));
