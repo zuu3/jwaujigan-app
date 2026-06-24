@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Keyboard, KeyboardAvoidingView, Modal, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { GlassButton } from '../../modules/glass-effect/src';
+import { GlassButton, GlassView } from '../../modules/glass-effect/src';
 import { usePolls, useCreatePoll } from '@/api/polls';
 import { useAuth } from '@/auth/auth-context';
 import { PollCard } from '@/components/poll-card';
@@ -54,13 +54,16 @@ function CreatePollModal({ visible, onClose }: { visible: boolean; onClose: () =
   }
 
   return (
-    <>
-      <Modal visible={visible} transparent animationType="fade">
-        <Pressable style={modal.backdrop} onPress={() => { Keyboard.dismiss(); close(); }} />
-      </Modal>
-      <Modal visible={visible} transparent animationType="slide" onRequestClose={close}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      presentationStyle="overFullScreen"
+      onRequestClose={close}
+    >
       <KeyboardAvoidingView style={modal.slideContainer} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <View style={[modal.sheet, { paddingBottom: insets.bottom + spacing[4] }]}>
+        <Pressable style={modal.backdrop} onPress={() => { Keyboard.dismiss(); close(); }} />
+        <GlassView style={[modal.sheet, { paddingBottom: insets.bottom + spacing[4] }]}>
           <View style={modal.header}>
             <View style={modal.handle} />
             <View style={modal.titleRow}>
@@ -135,10 +138,9 @@ function CreatePollModal({ visible, onClose }: { visible: boolean; onClose: () =
               <Text style={modal.submitText}>{createMutation.isPending ? '등록 중...' : '투표 등록하기'}</Text>
             </Pressable>
           </ScrollView>
-        </View>
+        </GlassView>
       </KeyboardAvoidingView>
-      </Modal>
-    </>
+    </Modal>
   );
 
 }
@@ -210,8 +212,16 @@ const styles = StyleSheet.create({
 
 const modal = StyleSheet.create({
   slideContainer: { flex: 1, justifyContent: 'flex-end' },
-  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(2,9,19,0.45)' },
-  sheet: { backgroundColor: colors.white, borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '92%' },
+  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(2,9,19,0.32)' },
+  sheet: {
+    maxHeight: '92%',
+    overflow: 'hidden',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    backgroundColor: 'rgba(255,255,255,0.72)',
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,255,255,0.72)',
+  },
   header: { paddingHorizontal: spacing[5], paddingTop: spacing[3] },
   handle: { width: 36, height: 4, borderRadius: 2, backgroundColor: colors.grey300, alignSelf: 'center', marginBottom: spacing[3] },
   titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingBottom: spacing[2] },
@@ -220,7 +230,7 @@ const modal = StyleSheet.create({
   scrollContent: { padding: spacing[5], paddingTop: spacing[3] },
   label: { ...typography.bodySmall, color: colors.grey700, fontWeight: '600', marginBottom: spacing[2] },
   sectionGap: { marginTop: spacing[4] },
-  input: { minHeight: 44, paddingHorizontal: spacing[3], paddingVertical: spacing[2], borderRadius: 8, borderWidth: 1, borderColor: colors.grey200, ...typography.body, color: colors.grey900 },
+  input: { minHeight: 44, paddingHorizontal: spacing[3], paddingVertical: spacing[2], borderRadius: 8, borderWidth: 1, borderColor: 'rgba(0,0,0,0.08)', backgroundColor: 'rgba(255,255,255,0.78)', ...typography.body, color: colors.grey900 },
   optionRow: { flexDirection: 'row', gap: spacing[2], alignItems: 'center' },
   removeBtn: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
   removeBtnText: { ...typography.body, color: colors.grey400 },
