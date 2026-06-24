@@ -1,5 +1,5 @@
-import { GlassContainer, GlassView } from 'expo-glass-effect';
 import { router } from 'expo-router';
+import { GlassView } from '../../modules/glass-effect/src';
 import { useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { LocalElectionResponse, ElectionType, ElectionPerson } from '@/api/local-election';
@@ -141,7 +141,7 @@ export function LocalElectionSection({ isLoading, isError, data, onRetry, distri
       </View>
 
       {/* 탭 */}
-      <GlassContainer style={styles.tabRow} spacing={8}>
+      <View style={styles.tabRow}>
         {(['candidates', 'winners'] as const).map((t) => (
           <Pressable key={t} onPress={() => changeTab(t)}>
             <GlassView style={[styles.glassTab, tab === t && styles.glassTabActive]}>
@@ -154,7 +154,7 @@ export function LocalElectionSection({ isLoading, isError, data, onRetry, distri
             </GlassView>
           </Pressable>
         ))}
-      </GlassContainer>
+      </View>
 
       {isLoading ? <SkeletonList count={2} lines={3} /> : null}
       {isError ? <ErrorPanel message="선거 정보를 불러오지 못했어요." onRetry={onRetry} /> : null}

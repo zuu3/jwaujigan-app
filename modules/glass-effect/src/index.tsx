@@ -1,28 +1,31 @@
 import { requireNativeView } from 'expo';
-import { Platform } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { BlurView } from 'expo-blur';
 
-type Props = {
+type NativeProps = {
   cornerRadius?: number;
   style?: StyleProp<ViewStyle>;
-  children?: React.ReactNode;
 };
 
+type Props = NativeProps & { children?: React.ReactNode };
+
+// Expo view manager name = "ModuleName_ViewClassName"
 const NativeGlassView = Platform.OS === 'ios'
-  ? requireNativeView<Props>('GlassEffect')
+  ? requireNativeView<NativeProps>('GlassEffect_GlassEffectView')
   : null;
 
-// iOS 26+: UIGlassEffect (native). iOS <26 or non-iOS: expo-blur systemUltraThinMaterial fallback.
+// UIGlassEffect를 배경 전용으로 absoluteFill 배치 — children은 일반 JS View에서 렌더링.
+// 이렇게 해야 children 텍스트가 glass 위에 제대로 표시됨.
 export function GlassView({ cornerRadius = 999, style, children }: Props) {
   if (NativeGlassView) {
     return (
-      <NativeGlassView cornerRadius={cornerRadius} style={style}>
+      <View style={[{ borderRadius: cornerRadius, overflow: 'hidden' }, style]}>
+        <NativeGlassView cornerRadius={cornerRadius} style={StyleSheet.absoluteFill} />
         {children}
-      </NativeGlassView>
+      </View>
     );
   }
-  // Android / web fallback
   return (
     <BlurView
       intensity={40}
