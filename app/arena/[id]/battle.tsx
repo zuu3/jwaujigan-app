@@ -20,6 +20,12 @@ import { typography } from '@/theme/typography';
 
 type Phase = 'ai-turn' | 'between-turns' | 'intervention' | 'result';
 type DisplayMessage = DebateMessage & { pending?: boolean };
+type PrefetchedTurn = {
+  issueId: string;
+  turnIndex: number;
+  historyLength: number;
+  promise: Promise<string>;
+};
 
 const MAX_ARG = 200;
 
@@ -51,6 +57,12 @@ function winnerColor(winner: DebateResult['winner']) {
 function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
+function speakerForTurn(index: number): 'progressive' | 'conservative' {
+  return index % 2 === 0 ? 'progressive' : 'conservative';
+}
+function roundForTurn(index: number) {
+  return Math.min(Math.floor(index / 2) + 1, 3);
+}
 
 export default function ArenaBattleScreen() {
   const { id, stance } = useLocalSearchParams<{ id: string; stance?: 'progressive' | 'conservative' | 'watch' }>();
@@ -72,11 +84,12 @@ export default function ArenaBattleScreen() {
   const shimmer = useRef(new Animated.Value(0)).current;
   const startedRef = useRef(false);
   const runningTurnRef = useRef<number | null>(null);
+  const prefetchedTurnRef = useRef<PrefetchedTurn | null>(null);
   const messagesRef = useRef<DebateMessage[]>([]);
   const logSavedRef = useRef(false);
 
   const userStance = stance === 'progressive' || stance === 'conservative' || stance === 'watch' ? stance : 'watch';
-  const round = Math.min(Math.floor(turnIndex / 2) + 1, 3);
+  const round = roundForTurn(turnIndex);
   const canSubmit = phase === 'intervention' && argument.trim().length > 0 && argument.length <= MAX_ARG;
 
   useEffect(() => {
@@ -106,8 +119,8 @@ export default function ArenaBattleScreen() {
 
   async function runTurn() {
     if (!issue) return;
-    const speakerStance: 'progressive' | 'conservative' = turnIndex % 2 === 0 ? 'progressive' : 'conservative';
-    const currentRound = Math.min(Math.floor(turnIndex / 2) + 1, 3);
+    const speakerStance = speakerForTurn(turnIndex);
+    const currentRound = roundForTurn(turnIndex);
     setStreamingRole(speakerStance);
     setStreamingText('');
     setIsAwaitingAi(true);
@@ -124,22 +137,15 @@ export default function ArenaBattleScreen() {
         round: currentRound,
         history: messagesRef.current,
       };
-      let aiText = '';
-
-      try {
-        aiText = await streamDebateTurn(token, payload, () => {});
-        if (!aiText.trim()) {
-          throw new StreamingUnsupportedError();
-        }
-      } catch (streamErr) {
-        if (!(streamErr instanceof StreamingUnsupportedError)) throw streamErr;
-        const response = await requestDebateTurn(token, payload);
-        aiText = response.text;
-      }
+      const aiText = await getAiText(payload);
       setIsAwaitingAi(false);
-      await revealText(aiText);
 
       const nextMessages: DebateMessage[] = [...messagesRef.current, { role: speakerStance as DebateMessage['role'], content: aiText }];
+      if (turnIndex < 5) {
+        prefetchTurn(turnIndex + 1, nextMessages);
+      }
+
+      await revealText(aiText);
       messagesRef.current = nextMessages;
       setMessages([...nextMessages]);
       setStreamingText('');
@@ -170,6 +176,61 @@ export default function ArenaBattleScreen() {
     }
   }
 
+  async function fetchAiText(payload: Parameters<typeof requestDebateTurn>[1]) {
+    try {
+      const streamed = await streamDebateTurn(token, payload, () => {});
+      if (!streamed.trim()) throw new StreamingUnsupportedError();
+      return streamed;
+    } catch (streamErr) {
+      if (!(streamErr instanceof StreamingUnsupportedError)) throw streamErr;
+      const response = await requestDebateTurn(token, payload);
+      return response.text;
+    }
+  }
+
+  async function getAiText(payload: Parameters<typeof requestDebateTurn>[1]) {
+    const cached = prefetchedTurnRef.current;
+    if (
+      cached &&
+      issue &&
+      cached.issueId === issue.id &&
+      cached.turnIndex === turnIndex &&
+      cached.historyLength === messagesRef.current.length
+    ) {
+      prefetchedTurnRef.current = null;
+      const prefetched = await cached.promise;
+      if (prefetched.trim()) return prefetched;
+    }
+    return fetchAiText(payload);
+  }
+
+  function prefetchTurn(nextTurnIndex: number, history: DebateMessage[]) {
+    if (!issue || nextTurnIndex > 5) return;
+    const speakerStance = speakerForTurn(nextTurnIndex);
+    const payload = {
+      issueId: issue.id,
+      issueTitle: issue.title,
+      issueBody: issue.body,
+      progressiveContext: issue.progressive,
+      conservativeContext: issue.conservative,
+      speakerStance,
+      round: roundForTurn(nextTurnIndex),
+      history,
+    };
+
+    prefetchedTurnRef.current = {
+      issueId: issue.id,
+      turnIndex: nextTurnIndex,
+      historyLength: history.length,
+      promise: fetchAiText(payload).catch((err) => {
+        if (prefetchedTurnRef.current?.turnIndex === nextTurnIndex) {
+          prefetchedTurnRef.current = null;
+        }
+        return '';
+      }),
+    };
+  }
+
   async function revealText(text: string) {
     setStreamingText('');
     const chars = Array.from(text);
@@ -190,6 +251,7 @@ export default function ArenaBattleScreen() {
   }
 
   function handleOpenIntervention() {
+    prefetchedTurnRef.current = null;
     setPhase('intervention');
   }
 
@@ -197,6 +259,7 @@ export default function ArenaBattleScreen() {
     if (!canSubmit) return;
     const userMessage: DebateMessage = { role: 'user', content: argument.trim() };
     const next = [...messagesRef.current, userMessage];
+    prefetchedTurnRef.current = null;
     messagesRef.current = next;
     setMessages([...next]);
     setArgument('');
@@ -207,6 +270,7 @@ export default function ArenaBattleScreen() {
   function restart() {
     startedRef.current = false;
     runningTurnRef.current = null;
+    prefetchedTurnRef.current = null;
     messagesRef.current = [];
     logSavedRef.current = false;
     setMessages([]);
