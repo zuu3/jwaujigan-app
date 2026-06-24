@@ -1,4 +1,4 @@
-import { router, useLocalSearchParams } from 'expo-router';
+import { Stack, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -166,16 +166,16 @@ export default function ArenaBattleScreen() {
 
   const header = (
     <View style={styles.listHeader}>
-      <View style={styles.topBar}>
-        <Pressable onPress={() => router.back()} hitSlop={16}>
-          <Text style={styles.back}>← 이전</Text>
-        </Pressable>
-        {phase !== 'result' ? (
+      <Stack.Screen options={{
+        headerShown: true,
+        title: 'AI 토론 배틀',
+        headerBackTitle: '',
+        headerRight: () => phase !== 'result' ? (
           <View style={styles.roundBadge}>
             <Text style={styles.roundText}>Round {round} / 3</Text>
           </View>
-        ) : null}
-      </View>
+        ) : null,
+      }} />
       {issueQuery.isLoading ? <SkeletonCard lines={2} /> : null}
       {issue ? (
         <View style={styles.header}>
@@ -244,7 +244,7 @@ export default function ArenaBattleScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <SafeAreaView style={styles.safeArea} edges={[]}>
       <FlatList
         ref={listRef}
         data={allMessages}
@@ -269,8 +269,6 @@ const styles = StyleSheet.create({
   listContent: { padding: spacing[5], paddingBottom: 120, gap: spacing[5] },
   listHeader: { gap: spacing[5], marginBottom: spacing[3] },
   listFooter: { gap: spacing[5], marginTop: spacing[3] },
-  topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  back: { ...typography.body, color: colors.grey600, fontWeight: '600' },
   roundBadge: { paddingHorizontal: spacing[3], paddingVertical: 4, borderRadius: 20, borderWidth: 1, borderColor: colors.grey200 },
   roundText: { ...typography.caption, color: colors.grey600, fontWeight: '700' },
   header: { gap: spacing[2] },

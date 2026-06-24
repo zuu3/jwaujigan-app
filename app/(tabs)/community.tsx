@@ -1,8 +1,8 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Keyboard, KeyboardAvoidingView, Modal, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { GlassButton } from '../../modules/glass-effect/src';
 import { usePolls, useCreatePoll } from '@/api/polls';
 import { useAuth } from '@/auth/auth-context';
 import { PollCard } from '@/components/poll-card';
@@ -54,17 +54,22 @@ function CreatePollModal({ visible, onClose }: { visible: boolean; onClose: () =
   }
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={close}>
-      <KeyboardAvoidingView style={modal.overlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+    <>
+      <Modal visible={visible} transparent animationType="fade">
         <Pressable style={modal.backdrop} onPress={() => { Keyboard.dismiss(); close(); }} />
+      </Modal>
+      <Modal visible={visible} transparent animationType="slide" onRequestClose={close}>
+      <KeyboardAvoidingView style={modal.slideContainer} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <View style={[modal.sheet, { paddingBottom: insets.bottom + spacing[4] }]}>
           <View style={modal.header}>
             <View style={modal.handle} />
             <View style={modal.titleRow}>
               <Text style={modal.title}>투표 만들기</Text>
-              <Pressable onPress={() => { Keyboard.dismiss(); close(); }} style={modal.closeBtn}>
-                <Text style={modal.closeBtnText}>닫기</Text>
-              </Pressable>
+              <GlassButton
+                systemImage="xmark"
+                onPress={() => { Keyboard.dismiss(); close(); }}
+                style={modal.closeBtn}
+              />
             </View>
           </View>
 
@@ -132,7 +137,8 @@ function CreatePollModal({ visible, onClose }: { visible: boolean; onClose: () =
           </ScrollView>
         </View>
       </KeyboardAvoidingView>
-    </Modal>
+      </Modal>
+    </>
   );
 
 }
@@ -157,11 +163,11 @@ export default function CommunityScreen() {
       <View style={styles.headerRow}>
         <PageHeader title="민심투표" description="짧은 투표로 의견을 모아보세요." />
         {/* Liquid Glass 만들기 버튼 — 스크롤 콘텐츠 위 플로팅 */}
-        <BlurView intensity={80} tint="systemChromeMaterial" style={styles.createBtnBlur}>
-          <Pressable style={styles.createBtnInner} onPress={() => setShowCreate(true)}>
-            <Text style={styles.createBtnText}>+ 만들기</Text>
-          </Pressable>
-        </BlurView>
+        <GlassButton
+          systemImage="plus"
+          onPress={() => setShowCreate(true)}
+          style={styles.createBtn}
+        />
       </View>
 
       {/* 정렬 탭 — 원래 깔끔한 스타일 유지 */}
@@ -193,9 +199,7 @@ export default function CommunityScreen() {
 
 const styles = StyleSheet.create({
   headerRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' },
-  createBtnBlur: { borderRadius: 10, overflow: 'hidden', alignSelf: 'flex-start', marginTop: 4, borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(0,0,0,0.12)' },
-  createBtnInner: { paddingHorizontal: spacing[3], paddingVertical: 8 },
-  createBtnText: { ...typography.bodySmall, color: colors.grey900, fontWeight: '700' },
+  createBtn: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', borderWidth: 0.5, borderColor: 'rgba(0,0,0,0.12)', marginTop: 4 },
   tabRow: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: colors.grey200 },
   tab: { paddingHorizontal: spacing[4], paddingVertical: spacing[3], borderBottomWidth: 2, borderBottomColor: 'transparent' },
   tabActive: { borderBottomColor: colors.blue500 },
@@ -205,15 +209,14 @@ const styles = StyleSheet.create({
 });
 
 const modal = StyleSheet.create({
-  overlay: { flex: 1, justifyContent: 'flex-end' },
+  slideContainer: { flex: 1, justifyContent: 'flex-end' },
   backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(2,9,19,0.45)' },
   sheet: { backgroundColor: colors.white, borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '92%' },
   header: { paddingHorizontal: spacing[5], paddingTop: spacing[3] },
   handle: { width: 36, height: 4, borderRadius: 2, backgroundColor: colors.grey300, alignSelf: 'center', marginBottom: spacing[3] },
   titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingBottom: spacing[2] },
   title: { ...typography.headingLarge, color: colors.grey900 },
-  closeBtn: { paddingVertical: spacing[2], paddingLeft: spacing[4] },
-  closeBtnText: { ...typography.body, color: colors.blue500, fontWeight: '600' },
+  closeBtn: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 0.5, borderColor: 'rgba(0,0,0,0.12)' },
   scrollContent: { padding: spacing[5], paddingTop: spacing[3] },
   label: { ...typography.bodySmall, color: colors.grey700, fontWeight: '600', marginBottom: spacing[2] },
   sectionGap: { marginTop: spacing[4] },

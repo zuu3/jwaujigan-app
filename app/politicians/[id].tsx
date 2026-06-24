@@ -1,4 +1,5 @@
-import { router, useLocalSearchParams } from 'expo-router';
+import { Stack, router, useLocalSearchParams } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { Alert, Image, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { usePoliticianDetail, useFollowPolitician } from '@/api/politicians';
 import { useMyFollows } from '@/api/mypage';
@@ -37,10 +38,8 @@ export default function PoliticianDetailScreen() {
   const bioLines = parseBio(pol?.biography ?? null);
 
   return (
-    <Screen>
-      <Pressable onPress={() => router.back()} hitSlop={16}>
-        <Text style={styles.back}>← 이전</Text>
-      </Pressable>
+    <Screen edges={[]}>
+      <Stack.Screen options={{ headerShown: true, title: pol?.name ?? '', headerBackTitle: '' }} />
 
       {detailQuery.isLoading ? <><SkeletonCard lines={3} /><SkeletonCard lines={4} /></> : null}
       {detailQuery.isError ? (
@@ -89,18 +88,21 @@ export default function PoliticianDetailScreen() {
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>연락처</Text>
               {pol.phone ? (
-                <Pressable onPress={() => void Linking.openURL(`tel:${pol.phone}`)}>
-                  <Text style={styles.contactLink}>📞 {pol.phone}</Text>
+                <Pressable style={styles.contactRow} onPress={() => void Linking.openURL(`tel:${pol.phone}`)}>
+                  <Ionicons name="call-outline" size={15} color={colors.blue500} />
+                  <Text style={styles.contactLink}>{pol.phone}</Text>
                 </Pressable>
               ) : null}
               {pol.email ? (
-                <Pressable onPress={() => void Linking.openURL(`mailto:${pol.email}`)}>
-                  <Text style={styles.contactLink}>✉️ {pol.email}</Text>
+                <Pressable style={styles.contactRow} onPress={() => void Linking.openURL(`mailto:${pol.email}`)}>
+                  <Ionicons name="mail-outline" size={15} color={colors.blue500} />
+                  <Text style={styles.contactLink}>{pol.email}</Text>
                 </Pressable>
               ) : null}
               {pol.homepage ? (
-                <Pressable onPress={() => void Linking.openURL(pol.homepage!)}>
-                  <Text style={styles.contactLink}>🌐 홈페이지 바로가기</Text>
+                <Pressable style={styles.contactRow} onPress={() => void Linking.openURL(pol.homepage!)}>
+                  <Ionicons name="globe-outline" size={15} color={colors.blue500} />
+                  <Text style={styles.contactLink}>홈페이지 바로가기</Text>
                 </Pressable>
               ) : null}
             </View>
@@ -122,7 +124,6 @@ export default function PoliticianDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  back: { ...typography.body, color: colors.grey600, fontWeight: '600' },
   profile: { flexDirection: 'row', gap: spacing[4], alignItems: 'flex-start' },
   avatar: { width: 72, height: 72, borderRadius: 36, overflow: 'hidden', backgroundColor: colors.grey100, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   avatarImg: { width: 72, height: 72 },
@@ -140,6 +141,7 @@ const styles = StyleSheet.create({
   followTextActive: { color: colors.blue500 },
   section: { gap: spacing[2] },
   sectionTitle: { ...typography.heading, color: colors.grey900 },
+  contactRow: { flexDirection: 'row', alignItems: 'center', gap: spacing[2] },
   contactLink: { ...typography.body, color: colors.blue500 },
   bioLine: { ...typography.body, color: colors.grey700, lineHeight: 22 },
 });

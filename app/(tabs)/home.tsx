@@ -8,6 +8,7 @@ import { useMe } from '@/api/me';
 import { useMyFollows } from '@/api/mypage';
 import { useLocalPoliticians } from '@/api/politicians';
 import { useAuth } from '@/auth/auth-context';
+import { GlassView } from '../../modules/glass-effect/src';
 import { IssueCard } from '@/components/issue-card';
 import { LocalElectionSection } from '@/components/local-election-section';
 import { PartyBadge } from '@/components/party-badge';
@@ -243,7 +244,9 @@ export default function HomeScreen() {
               </Pressable>
             ) : null}
             <Pressable onPress={() => router.push('/(tabs)/issues')}>
-              <Text style={styles.moreLink}>전체 보기 →</Text>
+              <GlassView style={styles.moreLinkBtn}>
+                <Text style={styles.moreLink}>전체 보기 →</Text>
+              </GlassView>
             </Pressable>
           </View>
         </View>
@@ -261,7 +264,9 @@ export default function HomeScreen() {
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>민심투표</Text>
           <Pressable onPress={() => router.push('/(tabs)/community')}>
-            <Text style={styles.moreLink}>더 보기 →</Text>
+            <GlassView style={styles.moreLinkBtn}>
+              <Text style={styles.moreLink}>더 보기 →</Text>
+            </GlassView>
           </Pressable>
         </View>
         {homeQuery.isLoading ? <SkeletonList count={2} lines={3} /> : null}
@@ -294,7 +299,8 @@ const styles = StyleSheet.create({
   balanceChipActive: { borderColor: colors.blue500, backgroundColor: colors.blue50 },
   balanceText: { ...typography.caption, color: colors.grey600, fontWeight: '600' },
   balanceTextActive: { color: colors.blue500 },
-  moreLink: { ...typography.bodySmall, color: colors.blue500, fontWeight: '600' },
+  moreLinkBtn: { borderRadius: 999, paddingHorizontal: 12, paddingVertical: 5, borderWidth: 0.5, borderColor: 'rgba(0,0,0,0.12)' },
+  moreLink: { ...typography.bodySmall, color: colors.grey700, fontWeight: '600' },
   emptyText: { ...typography.body, color: colors.grey500 },
   politicianCard: { flexDirection: 'row', alignItems: 'center', gap: spacing[3], padding: spacing[3], borderRadius: 12, borderWidth: 1, borderColor: colors.grey200 },
   politicianAvatar: { width: 40, height: 40, borderRadius: 20, overflow: 'hidden', backgroundColor: colors.blue50, alignItems: 'center', justifyContent: 'center' },

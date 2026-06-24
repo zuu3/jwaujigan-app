@@ -1,15 +1,19 @@
 import { PropsWithChildren } from 'react';
 import { ScrollViewProps, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import type { Edge } from 'react-native-safe-area-context';
 import { colors } from '@/theme/colors';
 import { spacing } from '@/theme/spacing';
 import { typography } from '@/theme/typography';
 
-type ScreenProps = PropsWithChildren<{ refreshControl?: ScrollViewProps['refreshControl'] }>;
+type ScreenProps = PropsWithChildren<{
+  refreshControl?: ScrollViewProps['refreshControl'];
+  edges?: Edge[];
+}>;
 
-export function Screen({ children, refreshControl }: ScreenProps) {
+export function Screen({ children, refreshControl, edges = ['top'] }: ScreenProps) {
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <SafeAreaView style={styles.safeArea} edges={edges}>
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}

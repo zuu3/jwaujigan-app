@@ -1,4 +1,4 @@
-import { router, useLocalSearchParams } from 'expo-router';
+import { Stack, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Image, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useLocalElection, ELECTION_TYPE_LABELS } from '@/api/local-election';
@@ -69,10 +69,8 @@ export default function LocalPoliticianDetailScreen() {
   }, [huboid, electionType]);
 
   return (
-    <Screen>
-      <Pressable onPress={() => router.back()} hitSlop={16}>
-        <Text style={styles.back}>← 이전</Text>
-      </Pressable>
+    <Screen edges={[]}>
+      <Stack.Screen options={{ headerShown: true, title: person?.name ?? '', headerBackTitle: '' }} />
 
       {electionQuery.isLoading ? <><SkeletonCard lines={3} /><SkeletonCard lines={2} /></> : null}
 
@@ -144,7 +142,6 @@ export default function LocalPoliticianDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  back: { ...typography.body, color: colors.grey600, fontWeight: '600' },
   profile: { flexDirection: 'row', gap: spacing[4], alignItems: 'flex-start' },
   photo: { width: 72, height: 90, borderRadius: 8, flexShrink: 0 },
   photoFallback: { width: 72, height: 90, borderRadius: 8, backgroundColor: colors.grey100, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },

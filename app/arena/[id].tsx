@@ -1,5 +1,6 @@
-import { router, useLocalSearchParams } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Stack, router, useLocalSearchParams } from 'expo-router';
+import { StyleSheet, Text, View } from 'react-native';
+import { GlassButton } from '../../modules/glass-effect/src';
 import { useIssue } from '@/api/issues';
 import { useAuth } from '@/auth/auth-context';
 import { Screen } from '@/components/screen';
@@ -15,10 +16,8 @@ export default function ArenaIssueScreen() {
   const issue = issueQuery.data;
 
   return (
-    <Screen>
-      <Pressable onPress={() => router.back()} hitSlop={16}>
-        <Text style={styles.back}>← 이전</Text>
-      </Pressable>
+    <Screen edges={[]}>
+      <Stack.Screen options={{ headerShown: true, title: 'AI 토론', headerBackTitle: '' }} />
 
       {issueQuery.isLoading ? (
         <>
@@ -57,15 +56,23 @@ export default function ArenaIssueScreen() {
           </View>
 
           <View style={styles.actions}>
-            <Pressable style={[styles.action, { backgroundColor: colors.blue500 }]} onPress={() => router.push('/arena/' + id + '/battle?stance=progressive')}>
-              <Text style={styles.actionText}>진보 편으로 참여</Text>
-            </Pressable>
-            <Pressable style={[styles.action, { backgroundColor: colors.politicalRed }]} onPress={() => router.push('/arena/' + id + '/battle?stance=conservative')}>
-              <Text style={styles.actionText}>보수 편으로 참여</Text>
-            </Pressable>
-            <Pressable style={[styles.action, { backgroundColor: colors.grey900 }]} onPress={() => router.push('/arena/' + id + '/battle?stance=watch')}>
-              <Text style={styles.actionText}>구경하기</Text>
-            </Pressable>
+            <GlassButton
+              label="진보 편으로 참여"
+              tintColor={colors.blue500}
+              onPress={() => router.push('/arena/' + id + '/battle?stance=progressive')}
+              style={styles.action}
+            />
+            <GlassButton
+              label="보수 편으로 참여"
+              tintColor={colors.politicalRed}
+              onPress={() => router.push('/arena/' + id + '/battle?stance=conservative')}
+              style={styles.action}
+            />
+            <GlassButton
+              label="구경하기"
+              onPress={() => router.push('/arena/' + id + '/battle?stance=watch')}
+              style={styles.action}
+            />
           </View>
         </>
       ) : null}
@@ -74,7 +81,6 @@ export default function ArenaIssueScreen() {
 }
 
 const styles = StyleSheet.create({
-  back: { ...typography.body, color: colors.grey600, fontWeight: '600' },
   header: { gap: spacing[2] },
   eyebrow: { ...typography.bodySmall, color: colors.grey600, fontWeight: '700' },
   title: { ...typography.displayLarge, color: colors.grey900 },
@@ -87,6 +93,5 @@ const styles = StyleSheet.create({
   sideLabel: { ...typography.subtitle },
   sideText: { ...typography.body, color: colors.grey900 },
   actions: { gap: spacing[3] },
-  action: { minHeight: 52, alignItems: 'center', justifyContent: 'center', borderRadius: 12 },
-  actionText: { ...typography.subtitle, color: colors.white },
+  action: { minHeight: 52 },
 });

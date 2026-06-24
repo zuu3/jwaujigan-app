@@ -79,8 +79,10 @@ function CollapsibleList({ items, tab }: { items: ElectionPerson[]; tab: 'candid
         <PersonCard key={p.huboid + p.giho} person={p} tab={tab} />
       ))}
       {items.length > COLLAPSE_AT ? (
-        <Pressable style={list.expandBtn} onPress={() => setExpanded((v) => !v)}>
-          <Text style={list.expandText}>{expanded ? '접기' : `나머지 ${hidden}명 보기`}</Text>
+        <Pressable onPress={() => setExpanded((v) => !v)}>
+          <GlassView style={list.expandBtn}>
+            <Text style={list.expandText}>{expanded ? '접기' : `나머지 ${hidden}명 보기`}</Text>
+          </GlassView>
         </Pressable>
       ) : null}
     </View>
@@ -218,6 +220,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     paddingHorizontal: spacing[3],
     paddingVertical: 6,
+    borderWidth: 0.5,
+    borderColor: 'rgba(0,0,0,0.12)',
   },
   glassBtnText: { ...typography.caption, color: colors.grey800, fontWeight: '600' },
 
@@ -230,6 +234,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing[1],
+    borderWidth: 0.5,
+    borderColor: 'rgba(0,0,0,0.12)',
   },
   glassTabActive: {
     backgroundColor: 'rgba(49,130,246,0.15)',
@@ -270,6 +276,6 @@ const card = StyleSheet.create({
 });
 
 const list = StyleSheet.create({
-  expandBtn: { padding: spacing[3], borderRadius: 10, borderWidth: 1, borderColor: colors.grey200, borderStyle: 'dashed', alignItems: 'center', backgroundColor: colors.grey50 },
-  expandText: { ...typography.bodySmall, color: colors.blue500, fontWeight: '600' },
+  expandBtn: { borderRadius: 10, padding: spacing[3], alignItems: 'center' },
+  expandText: { ...typography.bodySmall, color: colors.grey700, fontWeight: '600' },
 });

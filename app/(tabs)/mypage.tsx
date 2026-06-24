@@ -1,4 +1,5 @@
 import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { Alert, Image, Modal, Pressable, RefreshControl, ScrollView, Share, StyleSheet, Switch, Text, View } from 'react-native';
 import { useMe } from '@/api/me';
@@ -208,7 +209,12 @@ export default function MyPageScreen() {
         <View style={styles.profileInfo}>
           <Text style={styles.name}>{displayName}</Text>
           <Text style={styles.email}>{email}</Text>
-          {district ? <Text style={styles.district}>📍 {district}</Text> : null}
+          {district ? (
+            <View style={styles.districtRow}>
+              <Ionicons name="location-outline" size={13} color={colors.grey600} />
+              <Text style={styles.district}>{district}</Text>
+            </View>
+          ) : null}
           {level ? (
             <View style={styles.levelRow}>
               <Text style={styles.levelTitle}>{level.title}</Text>
@@ -267,7 +273,10 @@ export default function MyPageScreen() {
 
       {/* 공개 여부 */}
       <View style={styles.visibilityRow}>
-        <Text style={styles.visibilityLabel}>{isPublic ? '🌐 공개' : '🔒 비공개'}</Text>
+        <View style={styles.visibilityLabelRow}>
+          <Ionicons name={isPublic ? 'globe-outline' : 'lock-closed-outline'} size={15} color={colors.grey700} />
+          <Text style={styles.visibilityLabel}>{isPublic ? '공개' : '비공개'}</Text>
+        </View>
         <Switch
           value={isPublic}
           onValueChange={() => void handleVisibilityToggle()}
@@ -466,7 +475,9 @@ const styles = StyleSheet.create({
   profileInfo: { flex: 1, gap: 3 },
   name: { ...typography.subtitle, color: colors.grey900 },
   email: { ...typography.bodySmall, color: colors.grey500 },
+  districtRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   district: { ...typography.bodySmall, color: colors.grey600 },
+  visibilityLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   levelRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
   levelTitle: { ...typography.bodySmall, color: colors.blue500, fontWeight: '700' },
   levelSep: { ...typography.bodySmall, color: colors.grey400 },

@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { Stack } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useLocalElection, ELECTION_TYPE_LABELS } from '@/api/local-election';
 import type { ElectionType, ElectionPerson } from '@/api/local-election';
@@ -105,10 +105,8 @@ export default function BallotPreviewScreen() {
   const ballots = BALLOT_ORDER.filter((t) => (data?.candidates[t]?.length ?? 0) > 0);
 
   return (
-    <Screen>
-      <Pressable onPress={() => router.back()} hitSlop={16}>
-        <Text style={styles.back}>← 이전</Text>
-      </Pressable>
+    <Screen edges={[]}>
+      <Stack.Screen options={{ headerShown: true, title: '투표용지 미리보기', headerBackTitle: '' }} />
 
       <View style={styles.headerRow}>
         <Text style={styles.title}>내 투표용지 미리보기</Text>
@@ -138,7 +136,6 @@ export default function BallotPreviewScreen() {
 }
 
 const styles = StyleSheet.create({
-  back: { ...typography.body, color: colors.grey600, fontWeight: '600' },
   headerRow: { gap: spacing[1] },
   title: { ...typography.headingLarge, color: colors.grey900 },
   sub: { ...typography.body, color: colors.grey500 },

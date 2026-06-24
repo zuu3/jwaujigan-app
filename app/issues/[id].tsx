@@ -1,6 +1,7 @@
-import { router, useLocalSearchParams } from 'expo-router';
+import { Stack, router, useLocalSearchParams } from 'expo-router';
+import { GlassButton } from '../../modules/glass-effect/src';
 import { useState } from 'react';
-import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Linking, Pressable, Share, StyleSheet, Text, View } from 'react-native';
 import { useIssue, useVoteIssue } from '@/api/issues';
 import { useAuth } from '@/auth/auth-context';
 import { Screen } from '@/components/screen';
@@ -46,6 +47,7 @@ export default function IssueDetailScreen() {
   const issueQuery = useIssue(id, token);
   const voteMutation = useVoteIssue(id, token);
   const [optimisticIssue, setOptimisticIssue] = useState<Issue | null>(null);
+  const [methodologyOpen, setMethodologyOpen] = useState(false);
 
   const issue = optimisticIssue ?? issueQuery.data;
 
@@ -69,11 +71,14 @@ export default function IssueDetailScreen() {
   const counts = issue?.vote_counts;
   const isExpired = issue?.expires_at ? new Date(issue.expires_at) < new Date() : false;
 
+  async function shareIssue() {
+    if (!issue) return;
+    await Share.share({ title: issue.title, message: issue.title });
+  }
+
   return (
-    <Screen>
-      <Pressable onPress={() => router.back()} hitSlop={16}>
-        <Text style={styles.back}>← 이전</Text>
-      </Pressable>
+    <Screen edges={[]}>
+      <Stack.Screen options={{ headerShown: true, title: '이슈', headerBackTitle: '' }} />
 
       {issueQuery.isLoading ? (
         <>
@@ -99,6 +104,21 @@ export default function IssueDetailScreen() {
           ) : null}
 
           <View style={styles.header}>
+            <View style={styles.titleRow}>
+              <Text style={styles.title}>{issue.title}</Text>
+              <View style={styles.titleActions}>
+                <GlassButton
+                  systemImage="square.and.arrow.up"
+                  onPress={() => void shareIssue()}
+                  style={styles.iconBtn}
+                />
+                <GlassButton
+                  systemImage="questionmark.circle"
+                  onPress={() => setMethodologyOpen((v) => !v)}
+                  style={styles.iconBtn}
+                />
+              </View>
+            </View>
             <View style={styles.metaRow}>
               {issue.committee ? <Text style={styles.badge}>{issue.committee}</Text> : null}
               {issue.bill_status ? (
@@ -107,18 +127,50 @@ export default function IssueDetailScreen() {
                 </View>
               ) : null}
             </View>
-            <Text style={styles.title}>{issue.title}</Text>
             <Text style={styles.summary}>{issue.summary}</Text>
             <View style={styles.metaRow}>
               {issue.proposer ? <Text style={styles.meta}>{issue.proposer}</Text> : null}
               {issue.published_at ? <Text style={styles.meta}>{formatDate(issue.published_at)}</Text> : null}
             </View>
             {issue.source_url ? (
-              <Pressable onPress={() => void Linking.openURL(issue.source_url!)}>
-                <Text style={styles.sourceLink}>국회 원문 보기 →</Text>
-              </Pressable>
+              <GlassButton
+                label="국회 원문 보기 →"
+                onPress={() => void Linking.openURL(issue.source_url!)}
+                style={styles.sourceLinkBtn}
+              />
             ) : null}
           </View>
+
+          {methodologyOpen ? (
+            <View style={styles.methodology}>
+              <View style={styles.methodologyHead}>
+                <Text style={styles.methodologyTitle}>이 콘텐츠는 어떻게 만들어지나요?</Text>
+                <GlassButton
+                  systemImage="xmark"
+                  onPress={() => setMethodologyOpen(false)}
+                  style={styles.methodologyClose}
+                />
+              </View>
+              <View style={styles.methodologyBlock}>
+                <Text style={styles.methodologyLabel}>데이터 출처</Text>
+                <Text style={styles.methodologyText}>
+                  법안의 제목·제안자·소관위원회·상태는 국회 의안정보 Open API에서 가져옵니다. 본문 설명과 진보·보수 관점은 뉴스·국회 자료를 바탕으로 AI가 작성해요.
+                </Text>
+              </View>
+              <View style={styles.methodologyBlock}>
+                <Text style={styles.methodologyLabel}>중립성 원칙</Text>
+                <Text style={styles.methodologyText}>
+                  좌우지간은 어느 진영도 대변하지 않습니다. 진보·보수 관점은 동일한 분량과 동일한 시각적 비중으로 제시됩니다.
+                </Text>
+              </View>
+              <View style={styles.methodologyBlock}>
+                <Text style={styles.methodologyLabel}>한계와 주의사항</Text>
+                <Text style={styles.methodologyText}>
+                  원문이 공개 API로 제공되지 않는 경우 AI 추론이 포함될 수 있습니다. 정확한 조항·표결·의결 내용은 국회 원문에서 확인해주세요.
+                </Text>
+              </View>
+            </View>
+          ) : null}
 
           {issue.body ? (
             <View style={styles.section}>
@@ -152,6 +204,32 @@ export default function IssueDetailScreen() {
               <Text style={styles.sideText}>{issue.conservative}</Text>
             </View>
           </View>
+
+          {!isExpired ? (
+            <View style={styles.battleSection}>
+              <Text style={styles.battleTitle}>AI 토론 배틀</Text>
+              <Text style={styles.battleDesc}>진보·보수 AI의 논쟁을 지켜보거나 직접 편을 골라 참여해보세요.</Text>
+              <View style={styles.battleActions}>
+                <GlassButton
+                  label="진보 편으로 참여"
+                  tintColor={colors.blue500}
+                  onPress={() => router.push('/arena/' + id + '/battle?stance=progressive')}
+                  style={styles.battleBtn}
+                />
+                <GlassButton
+                  label="보수 편으로 참여"
+                  tintColor={colors.politicalRed}
+                  onPress={() => router.push('/arena/' + id + '/battle?stance=conservative')}
+                  style={styles.battleBtn}
+                />
+              </View>
+              <GlassButton
+                label="구경만 할래요"
+                onPress={() => router.push('/arena/' + id + '/battle?stance=watch')}
+                style={styles.watchBtn}
+              />
+            </View>
+          ) : null}
 
           <View style={styles.votePanel}>
             <View style={styles.votePanelHeader}>
@@ -200,10 +278,12 @@ export default function IssueDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  back: { ...typography.body, color: colors.grey600, fontWeight: '600' },
   expiredBanner: { padding: spacing[3], borderRadius: 8, backgroundColor: colors.grey100 },
   expiredText: { ...typography.bodySmall, color: colors.grey600 },
   header: { gap: spacing[3] },
+  titleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing[2] },
+  titleActions: { flexDirection: 'row', gap: spacing[1], paddingTop: 2 },
+  iconBtn: { width: 32, height: 32 },
   metaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2], alignItems: 'center' },
   badge: { ...typography.caption, paddingHorizontal: spacing[2], paddingVertical: 3, borderRadius: 4, overflow: 'hidden', color: colors.grey600, backgroundColor: colors.grey100 },
   statusChip: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: spacing[2], paddingVertical: 3, borderRadius: 4 },
@@ -211,10 +291,17 @@ const styles = StyleSheet.create({
   statusFail: { backgroundColor: '#fef2f2' },
   statusPending: { backgroundColor: colors.grey100 },
   statusText: { ...typography.caption, fontWeight: '600', color: colors.grey700 },
-  title: { ...typography.displayLarge, color: colors.grey900 },
+  title: { ...typography.displayLarge, color: colors.grey900, flex: 1 },
   summary: { ...typography.bodyLarge, color: colors.grey600 },
   meta: { ...typography.bodySmall, color: colors.grey500 },
-  sourceLink: { ...typography.bodySmall, color: colors.blue500, fontWeight: '600' },
+  sourceLinkBtn: { alignSelf: 'flex-start', height: 32 },
+  methodology: { gap: spacing[3], padding: spacing[4], borderRadius: 12, borderWidth: 1, borderColor: colors.grey200, backgroundColor: colors.grey50 },
+  methodologyHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing[2] },
+  methodologyTitle: { ...typography.subtitle, color: colors.grey900 },
+  methodologyClose: { width: 28, height: 28 },
+  methodologyBlock: { gap: 4 },
+  methodologyLabel: { ...typography.caption, color: colors.blue500, fontWeight: '700' },
+  methodologyText: { ...typography.bodySmall, color: colors.grey600, lineHeight: 20 },
   section: { gap: spacing[2] },
   sectionTitle: { ...typography.heading, color: colors.grey900 },
   bodyText: { ...typography.body, color: colors.grey700 },
@@ -228,6 +315,12 @@ const styles = StyleSheet.create({
   side: { gap: spacing[2], padding: spacing[4], borderRadius: 12 },
   sideLabel: { ...typography.subtitle },
   sideText: { ...typography.body, color: colors.grey900 },
+  battleSection: { gap: spacing[3], padding: spacing[4], borderRadius: 12, borderWidth: 1, borderColor: colors.grey200, backgroundColor: colors.grey50 },
+  battleTitle: { ...typography.heading, color: colors.grey900 },
+  battleDesc: { ...typography.body, color: colors.grey600 },
+  battleActions: { flexDirection: 'row', gap: spacing[2] },
+  battleBtn: { flex: 1, minHeight: 44 },
+  watchBtn: { minHeight: 36 },
   votePanel: { gap: spacing[3], padding: spacing[4], borderRadius: 12, borderWidth: 1, borderColor: colors.grey200 },
   votePanelHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   voteBars: { gap: spacing[2] },

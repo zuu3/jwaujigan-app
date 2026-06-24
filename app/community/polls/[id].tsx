@@ -1,4 +1,4 @@
-import { router, useLocalSearchParams } from 'expo-router';
+import { Stack, useLocalSearchParams } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { usePoll, useVotePoll } from '@/api/polls';
 import { useAuth } from '@/auth/auth-context';
@@ -33,10 +33,8 @@ export default function PollDetailScreen() {
   }
 
   return (
-    <Screen>
-      <Pressable onPress={() => router.back()} hitSlop={16}>
-        <Text style={styles.back}>← 이전</Text>
-      </Pressable>
+    <Screen edges={[]}>
+      <Stack.Screen options={{ headerShown: true, title: '투표', headerBackTitle: '' }} />
 
       {pollQuery.isLoading ? (
         <>
@@ -114,7 +112,7 @@ export default function PollDetailScreen() {
             </Text>
           ) : null}
 
-          <CommentSection pollId={id} token={token} />
+          <CommentSection pollId={id} token={token} expired={expired} />
         </>
       ) : null}
     </Screen>
@@ -122,7 +120,6 @@ export default function PollDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  back: { ...typography.body, color: colors.grey600, fontWeight: '600' },
   header: { gap: spacing[2] },
   title: { ...typography.displayLarge, color: colors.grey900 },
   metaRow: { flexDirection: 'row', gap: spacing[2] },

@@ -89,11 +89,6 @@ export default function ArenaScreen() {
             </View>
           ) : null}
           <Text style={styles.summary} numberOfLines={2}>{issue.summary}</Text>
-          <View style={styles.stanceRow}>
-            <View style={styles.progressivePill}><Text style={styles.progressiveText}>진보</Text></View>
-            <View style={styles.conservativePill}><Text style={styles.conservativeText}>보수</Text></View>
-          </View>
-          <Text style={styles.action}>배틀 참여하기 →</Text>
         </Pressable>
       ))}
     </Screen>
@@ -117,10 +112,4 @@ const styles = StyleSheet.create({
   metaText: { ...typography.caption, color: colors.grey500 },
   meta: { ...typography.caption, color: colors.grey500 },
   summary: { ...typography.body, color: colors.grey600 },
-  stanceRow: { flexDirection: 'row', gap: spacing[2] },
-  progressivePill: { paddingHorizontal: spacing[2], paddingVertical: 4, borderRadius: 6, backgroundColor: colors.blue50 },
-  progressiveText: { ...typography.caption, color: colors.blue500, fontWeight: '600' },
-  conservativePill: { paddingHorizontal: spacing[2], paddingVertical: 4, borderRadius: 6, backgroundColor: colors.politicalRedLight },
-  conservativeText: { ...typography.caption, color: colors.politicalRed, fontWeight: '600' },
-  action: { ...typography.bodySmall, color: colors.blue500, fontWeight: '600' },
 });

@@ -25,9 +25,9 @@ function formatRelative(iso: string): string {
   return `${Math.floor(hours / 24)}일 전`;
 }
 
-type Props = { pollId: string; token: string | null };
+type Props = { pollId: string; token: string | null; expired?: boolean };
 
-export function CommentSection({ pollId, token }: Props) {
+export function CommentSection({ pollId, token, expired }: Props) {
   const [comments, setComments] = useState<CommentItem[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -238,28 +238,34 @@ export function CommentSection({ pollId, token }: Props) {
       <Text style={styles.title}>토론 {loading ? '' : `(${totalCount})`}</Text>
 
       {/* 새 댓글 */}
-      <View style={styles.composer}>
-        <TextInput
-          style={styles.input}
-          placeholder={token ? '이 투표에 대한 의견을 남겨보세요. (최대 500자)' : '로그인하면 의견을 남길 수 있어요.'}
-          placeholderTextColor={colors.grey400}
-          value={draft}
-          onChangeText={setDraft}
-          maxLength={500}
-          multiline
-          editable={!submitting && Boolean(token)}
-        />
-        <View style={styles.composerFooter}>
-          <Text style={styles.charCount}>{draft.length}/500</Text>
-          <Pressable
-            style={[styles.postBtn, (submitting || !draft.trim()) && styles.postBtnDisabled]}
-            onPress={() => void submitTop()}
-            disabled={submitting || !draft.trim()}
-          >
-            <Text style={styles.postBtnText}>{submitting ? '게시 중…' : '의견 남기기'}</Text>
-          </Pressable>
+      {expired ? (
+        <View style={styles.expiredNotice}>
+          <Text style={styles.expiredNoticeText}>마감된 투표에는 댓글을 남길 수 없어요.</Text>
         </View>
-      </View>
+      ) : (
+        <View style={styles.composer}>
+          <TextInput
+            style={styles.input}
+            placeholder={token ? '이 투표에 대한 의견을 남겨보세요. (최대 500자)' : '로그인하면 의견을 남길 수 있어요.'}
+            placeholderTextColor={colors.grey400}
+            value={draft}
+            onChangeText={setDraft}
+            maxLength={500}
+            multiline
+            editable={!submitting && Boolean(token)}
+          />
+          <View style={styles.composerFooter}>
+            <Text style={styles.charCount}>{draft.length}/500</Text>
+            <Pressable
+              style={[styles.postBtn, (submitting || !draft.trim()) && styles.postBtnDisabled]}
+              onPress={() => void submitTop()}
+              disabled={submitting || !draft.trim()}
+            >
+              <Text style={styles.postBtnText}>{submitting ? '게시 중…' : '의견 남기기'}</Text>
+            </Pressable>
+          </View>
+        </View>
+      )}
 
       {loading ? (
         <ActivityIndicator color={colors.blue500} style={{ marginTop: spacing[4] }} />
@@ -357,4 +363,6 @@ const styles = StyleSheet.create({
   loadMoreText: { ...typography.body, color: colors.grey700, fontWeight: '600' },
   empty: { ...typography.body, color: colors.grey500, textAlign: 'center', paddingVertical: spacing[6] },
   errorText: { ...typography.bodySmall, color: colors.red500, textAlign: 'center', paddingVertical: spacing[4] },
+  expiredNotice: { paddingVertical: spacing[3], paddingHorizontal: spacing[4], borderRadius: 8, backgroundColor: colors.grey50, borderWidth: 1, borderColor: colors.grey200 },
+  expiredNoticeText: { ...typography.bodySmall, color: colors.grey500, textAlign: 'center' },
 });
