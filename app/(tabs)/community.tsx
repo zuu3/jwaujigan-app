@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, Keyboard, KeyboardAvoidingView, Modal, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Animated, Easing, Keyboard, KeyboardAvoidingView, Modal, PanResponder, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GlassButton, GlassView } from '../../modules/glass-effect/src';
 import { usePolls, useCreatePoll } from '@/api/polls';
@@ -65,6 +65,16 @@ function CreatePollModal({ visible, onClose }: { visible: boolean; onClose: () =
     onClose();
   }
 
+  const handlePan = useRef(PanResponder.create({
+    onMoveShouldSetPanResponder: (_, gesture) => gesture.dy > 6 && Math.abs(gesture.dy) > Math.abs(gesture.dx),
+    onPanResponderRelease: (_, gesture) => {
+      if (gesture.dy > 24 || gesture.vy > 0.45) {
+        Keyboard.dismiss();
+        close();
+      }
+    },
+  })).current;
+
   async function handleSubmit() {
     setError(null);
     if (!question.trim()) { setError('질문을 입력해주세요.'); return; }
@@ -110,7 +120,6 @@ function CreatePollModal({ visible, onClose }: { visible: boolean; onClose: () =
           style={[
             modal.sheetFrame,
             {
-              paddingBottom: Math.max(insets.bottom, spacing[3]),
               opacity: progress,
               transform: [{ translateY: sheetTranslateY }, { scale: sheetScale }],
             },
@@ -118,12 +127,11 @@ function CreatePollModal({ visible, onClose }: { visible: boolean; onClose: () =
         >
           <GlassView cornerRadius={32} style={modal.sheet}>
             <View style={modal.header}>
-              <View style={modal.handle} />
+              <View style={modal.handleHitArea} {...handlePan.panHandlers}>
+                <View style={modal.handle} />
+              </View>
               <View style={modal.titleRow}>
                 <Text style={modal.title}>투표 만들기</Text>
-                <Pressable style={modal.closeBtn} onPress={() => { Keyboard.dismiss(); close(); }} hitSlop={10}>
-                  <Text style={modal.closeText}>×</Text>
-                </Pressable>
               </View>
             </View>
 
@@ -179,7 +187,7 @@ function CreatePollModal({ visible, onClose }: { visible: boolean; onClose: () =
                 {error ? <Text style={modal.error}>{error}</Text> : null}
               </View>
             </ScrollView>
-            <View style={modal.footer}>
+            <View style={[modal.footer, { paddingBottom: Math.max(insets.bottom + spacing[2], spacing[4]) }]}>
               <Pressable
                 style={[modal.submitBtn, createMutation.isPending && modal.submitDisabled]}
                 onPress={() => { Keyboard.dismiss(); void handleSubmit(); }}
@@ -268,7 +276,7 @@ const modal = StyleSheet.create({
     paddingHorizontal: spacing[3],
   },
   sheet: {
-    maxHeight: '92%',
+    maxHeight: '94%',
     overflow: 'hidden',
     borderRadius: 32,
     backgroundColor: 'rgba(246,248,251,0.82)',
@@ -279,17 +287,16 @@ const modal = StyleSheet.create({
     shadowRadius: 28,
     shadowOffset: { width: 0, height: 16 },
   },
-  header: { paddingHorizontal: spacing[5], paddingTop: spacing[3] },
-  handle: { width: 38, height: 4, borderRadius: 2, backgroundColor: 'rgba(60,60,67,0.28)', alignSelf: 'center', marginBottom: spacing[3] },
-  titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingBottom: spacing[2] },
+  header: { paddingHorizontal: spacing[5], paddingTop: spacing[2] },
+  handleHitArea: { alignItems: 'center', paddingTop: spacing[1], paddingBottom: spacing[3] },
+  handle: { width: 40, height: 4, borderRadius: 2, backgroundColor: 'rgba(60,60,67,0.3)' },
+  titleRow: { flexDirection: 'row', alignItems: 'center', paddingBottom: spacing[1] },
   title: { ...typography.headingLarge, color: colors.grey900 },
-  closeBtn: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.58)', borderWidth: 0.5, borderColor: 'rgba(0,0,0,0.08)' },
-  closeText: { fontSize: 28, lineHeight: 30, color: colors.grey700, fontWeight: '300' },
-  scrollContent: { paddingHorizontal: spacing[5], paddingTop: spacing[3], paddingBottom: spacing[3] },
-  formContent: { paddingBottom: spacing[1] },
+  scrollContent: { paddingHorizontal: spacing[5], paddingTop: spacing[2], paddingBottom: spacing[2] },
+  formContent: { paddingBottom: 0 },
   label: { ...typography.bodySmall, color: colors.grey700, fontWeight: '600', marginBottom: spacing[2] },
-  sectionGap: { marginTop: spacing[4] },
-  input: { minHeight: 44, paddingHorizontal: spacing[3], paddingVertical: spacing[2], borderRadius: 10, borderWidth: 0.5, borderColor: 'rgba(0,0,0,0.06)', backgroundColor: 'rgba(255,255,255,0.78)', ...typography.body, color: colors.grey900 },
+  sectionGap: { marginTop: spacing[3] },
+  input: { minHeight: 42, paddingHorizontal: spacing[3], paddingVertical: 7, borderRadius: 10, borderWidth: 0.5, borderColor: 'rgba(0,0,0,0.06)', backgroundColor: 'rgba(255,255,255,0.78)', ...typography.body, color: colors.grey900 },
   optionRow: { flexDirection: 'row', gap: spacing[2], alignItems: 'center' },
   removeBtn: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
   removeBtnText: { ...typography.body, color: colors.grey400 },
@@ -300,8 +307,8 @@ const modal = StyleSheet.create({
   dayText: { ...typography.body, color: colors.grey600 },
   dayTextActive: { color: colors.blue500, fontWeight: '600' },
   error: { ...typography.bodySmall, color: colors.red500, marginTop: spacing[2] },
-  footer: { paddingHorizontal: spacing[5], paddingTop: spacing[2], paddingBottom: spacing[4] },
-  submitBtn: { minHeight: 52, alignItems: 'center', justifyContent: 'center', borderRadius: 14, backgroundColor: colors.blue500 },
+  footer: { paddingHorizontal: spacing[5], paddingTop: spacing[2] },
+  submitBtn: { minHeight: 50, alignItems: 'center', justifyContent: 'center', borderRadius: 14, backgroundColor: colors.blue500 },
   submitDisabled: { opacity: 0.5 },
   submitText: { ...typography.subtitle, color: colors.white },
 });
