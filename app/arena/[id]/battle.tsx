@@ -2,7 +2,15 @@ import { Stack, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { judgeDebate, requestDebateTurn, saveBattleLog, DebateMessage, DebateResult } from '@/api/arena';
+import {
+  judgeDebate,
+  requestDebateTurn,
+  saveBattleLog,
+  streamDebateTurn,
+  StreamingUnsupportedError,
+  DebateMessage,
+  DebateResult,
+} from '@/api/arena';
 import { useIssue } from '@/api/issues';
 import { useAuth } from '@/auth/auth-context';
 import { SkeletonCard } from '@/components/state-panels';
@@ -39,6 +47,9 @@ function winnerColor(winner: DebateResult['winner']) {
   if (winner === 'conservative') return colors.politicalRed;
   return colors.grey700;
 }
+function wait(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 export default function ArenaBattleScreen() {
   const { id, stance } = useLocalSearchParams<{ id: string; stance?: 'progressive' | 'conservative' | 'watch' }>();
@@ -74,14 +85,14 @@ export default function ArenaBattleScreen() {
 
   async function runTurn() {
     if (!issue) return;
-    const speakerStance = turnIndex % 2 === 0 ? 'progressive' : 'conservative';
+    const speakerStance: 'progressive' | 'conservative' = turnIndex % 2 === 0 ? 'progressive' : 'conservative';
     const currentRound = Math.min(Math.floor(turnIndex / 2) + 1, 3);
     setStreamingRole(speakerStance);
     setStreamingText('');
     setError(null);
 
     try {
-      const response = await requestDebateTurn(token, {
+      const payload = {
         issueId: issue.id,
         issueTitle: issue.title,
         issueBody: issue.body,
@@ -90,8 +101,24 @@ export default function ArenaBattleScreen() {
         speakerStance,
         round: currentRound,
         history: messagesRef.current,
-      });
-      const nextMessages: DebateMessage[] = [...messagesRef.current, { role: speakerStance as DebateMessage['role'], content: response.text }];
+      };
+      let aiText = '';
+
+      try {
+        aiText = await streamDebateTurn(token, payload, (chunk) => {
+          setStreamingText((prev) => prev + chunk);
+        });
+        if (!aiText.trim()) {
+          throw new StreamingUnsupportedError();
+        }
+      } catch (streamErr) {
+        if (!(streamErr instanceof StreamingUnsupportedError)) throw streamErr;
+        const response = await requestDebateTurn(token, payload);
+        aiText = response.text;
+        await revealText(aiText);
+      }
+
+      const nextMessages: DebateMessage[] = [...messagesRef.current, { role: speakerStance as DebateMessage['role'], content: aiText }];
       messagesRef.current = nextMessages;
       setMessages([...nextMessages]);
       setStreamingText('');
@@ -118,6 +145,19 @@ export default function ArenaBattleScreen() {
       setPhase('between-turns');
     } finally {
       runningTurnRef.current = null;
+    }
+  }
+
+  async function revealText(text: string) {
+    setStreamingText('');
+    const chars = Array.from(text);
+    const chunkSize = chars.length > 900 ? 4 : chars.length > 450 ? 3 : 2;
+    let visible = '';
+
+    for (let i = 0; i < chars.length; i += chunkSize) {
+      visible += chars.slice(i, i + chunkSize).join('');
+      setStreamingText(visible);
+      await wait(16);
     }
   }
 
