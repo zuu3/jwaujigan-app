@@ -1,5 +1,5 @@
 import { Stack, router, useLocalSearchParams } from 'expo-router';
-import { GlassButton } from '../../modules/glass-effect/src';
+import { GlassButton, GlassView } from '../../modules/glass-effect/src';
 import { useState } from 'react';
 import { Linking, Pressable, Share, StyleSheet, Text, View } from 'react-native';
 import { useIssue, useVoteIssue } from '@/api/issues';
@@ -133,11 +133,11 @@ export default function IssueDetailScreen() {
               {issue.published_at ? <Text style={styles.meta}>{formatDate(issue.published_at)}</Text> : null}
             </View>
             {issue.source_url ? (
-              <GlassButton
-                label="국회 원문 보기 →"
-                onPress={() => void Linking.openURL(issue.source_url!)}
-                style={styles.sourceLinkBtn}
-              />
+              <Pressable onPress={() => void Linking.openURL(issue.source_url!)} hitSlop={8}>
+                <GlassView style={styles.sourceLinkBtn}>
+                  <Text style={styles.sourceLinkText}>국회 원문 보기 →</Text>
+                </GlassView>
+              </Pressable>
             ) : null}
           </View>
 
@@ -294,7 +294,8 @@ const styles = StyleSheet.create({
   title: { ...typography.displayLarge, color: colors.grey900, flex: 1 },
   summary: { ...typography.bodyLarge, color: colors.grey600 },
   meta: { ...typography.bodySmall, color: colors.grey500 },
-  sourceLinkBtn: { alignSelf: 'flex-start', height: 32 },
+  sourceLinkBtn: { alignSelf: 'flex-start', minHeight: 32, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6, alignItems: 'center', justifyContent: 'center' },
+  sourceLinkText: { ...typography.bodySmall, color: colors.grey700, fontWeight: '700' },
   methodology: { gap: spacing[3], padding: spacing[4], borderRadius: 12, borderWidth: 1, borderColor: colors.grey200, backgroundColor: colors.grey50 },
   methodologyHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing[2] },
   methodologyTitle: { ...typography.subtitle, color: colors.grey900 },
