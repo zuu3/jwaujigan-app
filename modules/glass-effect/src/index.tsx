@@ -12,7 +12,7 @@ type Props = NativeProps & { children?: React.ReactNode };
 
 // Expo view manager name = "ModuleName_ViewClassName"
 const NativeGlassView = Platform.OS === 'ios'
-  ? requireNativeView<NativeProps>('GlassEffect_GlassEffectView')
+  ? requireNativeView<NativeProps>('GlassEffect')
   : null;
 
 // UIGlassEffect를 배경 전용으로 absoluteFill 배치 — children은 일반 JS View에서 렌더링.
