@@ -1,5 +1,5 @@
+import { GlassContainer, GlassView } from 'expo-glass-effect';
 import { router } from 'expo-router';
-import { GlassView } from '../../modules/glass-effect/src';
 import { useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { LocalElectionResponse, ElectionType, ElectionPerson } from '@/api/local-election';
@@ -134,20 +134,17 @@ export function LocalElectionSection({ isLoading, isError, data, onRetry, distri
           <Text style={styles.sub}>{wiwLabel}</Text>
         </View>
         <Pressable onPress={() => router.push('/ballot-preview')}>
-          <GlassView cornerRadius={999} style={styles.glassBtn}>
+          <GlassView style={styles.glassBtn}>
             <Text style={styles.glassBtnText}>투표용지 미리보기</Text>
           </GlassView>
         </Pressable>
       </View>
 
       {/* 탭 */}
-      <View style={styles.tabRow}>
+      <GlassContainer style={styles.tabRow} spacing={8}>
         {(['candidates', 'winners'] as const).map((t) => (
           <Pressable key={t} onPress={() => changeTab(t)}>
-            <GlassView
-              cornerRadius={999}
-              style={[styles.glassTab, tab === t && styles.glassTabActive]}
-            >
+            <GlassView style={[styles.glassTab, tab === t && styles.glassTabActive]}>
               <Text style={[styles.tabText, tab === t && styles.tabTextActive]}>
                 {t === 'candidates' ? '이번 후보자' : '현직'}
               </Text>
@@ -157,7 +154,7 @@ export function LocalElectionSection({ isLoading, isError, data, onRetry, distri
             </GlassView>
           </Pressable>
         ))}
-      </View>
+      </GlassContainer>
 
       {isLoading ? <SkeletonList count={2} lines={3} /> : null}
       {isError ? <ErrorPanel message="선거 정보를 불러오지 못했어요." onRetry={onRetry} /> : null}
@@ -216,8 +213,9 @@ const styles = StyleSheet.create({
   title: { ...typography.heading, color: colors.grey900 },
   sub: { ...typography.caption, color: colors.grey500 },
 
-  // UIGlassEffect (native) — no manual bg/border needed, OS renders glass
   glassBtn: {
+    borderRadius: 999,
+    overflow: 'hidden',
     paddingHorizontal: spacing[3],
     paddingVertical: 6,
   },
@@ -225,6 +223,8 @@ const styles = StyleSheet.create({
 
   tabRow: { flexDirection: 'row', gap: spacing[2] },
   glassTab: {
+    borderRadius: 999,
+    overflow: 'hidden',
     paddingHorizontal: spacing[3],
     paddingVertical: spacing[2],
     flexDirection: 'row',
@@ -232,7 +232,6 @@ const styles = StyleSheet.create({
     gap: spacing[1],
   },
   glassTabActive: {
-    // active tint: subtle blue overlay on top of glass
     backgroundColor: 'rgba(49,130,246,0.15)',
   },
   tabText: { ...typography.bodySmall, color: colors.grey600, fontWeight: '600' },
