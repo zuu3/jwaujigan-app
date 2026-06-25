@@ -160,16 +160,26 @@ export default function MyPageScreen() {
     } catch { /* cancelled */ }
   }
 
-  async function handleVisibilityToggle() {
-    if (visibilityLoading || !token) return;
+  async function handleVisibilityToggle(nextValue: boolean) {
+    if (visibilityLoading || !token || !profile) return;
+    const previousMeQueries = queryClient.getQueriesData({ queryKey: ['me'] });
+
+    queryClient.setQueriesData({ queryKey: ['me'] }, (old: typeof profile | undefined) => (
+      old ? { ...old, is_public: nextValue } : old
+    ));
+
     setVisibilityLoading(true);
     try {
-      await apiPatch('/api/me/visibility', { is_public: !isPublic }, { token });
+      await apiPatch('/api/me/visibility', { is_public: nextValue }, { token });
       await queryClient.invalidateQueries({ queryKey: ['me'] });
     } catch {
+      previousMeQueries.forEach(([queryKey, data]) => {
+        queryClient.setQueryData(queryKey, data);
+      });
       Alert.alert('오류', '프로필 공개 설정 변경에 실패했어요.');
+    } finally {
+      setVisibilityLoading(false);
     }
-    setVisibilityLoading(false);
   }
 
   async function handleDeleteAccount() {
@@ -279,7 +289,7 @@ export default function MyPageScreen() {
         </View>
         <Switch
           value={isPublic}
-          onValueChange={() => void handleVisibilityToggle()}
+          onValueChange={(nextValue) => void handleVisibilityToggle(nextValue)}
           disabled={visibilityLoading}
           trackColor={{ false: colors.grey200, true: colors.blue500 }}
           thumbColor={colors.white}
